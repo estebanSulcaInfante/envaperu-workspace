@@ -3,8 +3,7 @@ tipo: modelo_bd
 tabla: se_colorea
 estado: activo
 tags: [dominio, colorantes, pigmentos, receta]
-relaciones:
-  - padre: [[Lote_Color]]
+relaciones_padre: "[[Lote_Color]]"
 fecha_creacion: 2026-04-21
 ---
 

@@ -3,9 +3,10 @@ tipo: modelo_bd
 tabla: control_peso
 estado: activo
 tags: [dominio, core, pesaje, calidad, verificacion]
-relaciones:
-  - padre: [[Registro_Diario]]
-  - modulo: [[04_Modulo_Pesaje]]
+relaciones_padre:
+  - "[[Registro_Diario]]"
+relaciones_modulo:
+  - "[[04_Modulo_Pesaje]]"
 fecha_creacion: 2026-04-21
 ---
 

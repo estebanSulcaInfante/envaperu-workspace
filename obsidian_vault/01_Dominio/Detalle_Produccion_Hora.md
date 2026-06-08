@@ -3,8 +3,8 @@ tipo: modelo_bd
 tabla: detalle_produccion_hora
 estado: activo
 tags: [dominio, detalle, hora, seguimiento]
-relaciones:
-  - padre: [[Registro_Diario]]
+relaciones_padre:
+  - "[[Registro_Diario]]"
 fecha_creacion: 2026-04-21
 ---
 

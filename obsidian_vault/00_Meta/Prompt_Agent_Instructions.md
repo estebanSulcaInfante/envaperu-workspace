@@ -19,6 +19,7 @@ Esta bóveda de Obsidian es la **memoria persistente y fuente de verdad** del pr
 | `02_Backend/` | Endpoints API, servicios, lógica de servidor | Al modificar o crear endpoints |
 | `03_Frontend/` | Vistas, componentes, estado de UI | Al trabajar con la interfaz |
 | `04_Modulo_Pesaje/` | Hardware, integración balanza, UI de planta | Al trabajar con pesaje |
+| `05_Especificaciones/` | Pipeline de desarrollo (Drafts, User Stories, Tech Specs, Aprobado para Dev) | Al planificar, definir o comenzar a desarrollar un requerimiento |
 | `10_Flujos_y_Procesos/` | Casos de uso paso a paso | Para entender flujos completos |
 | `20_Registro_Decisiones/` | ADRs (Architecture Decision Records) | Para entender el "por qué" de decisiones |
 | `99_Plantillas/` | Templates para crear nuevas notas | Al documentar algo nuevo |
@@ -37,6 +38,8 @@ Cuando hagas cambios significativos al proyecto, **actualiza la nota correspondi
 3. **Nuevo componente UI** → Crear en `03_Frontend/Componentes/` usando `99_Plantillas/TPL_Componente_UI.md`
 4. **Decisión arquitectónica** → Crear ADR en `20_Registro_Decisiones/`
 5. **Cambio en reglas de negocio** → Actualizar la nota de dominio afectada
+6. **Planificación de requerimientos** → Usar la carpeta `05_Especificaciones/` y seguir el pipeline desde Draft hasta Aprobado para Dev.
 
 ## Regla Crítica
 > **Nunca asumas reglas de negocio sin consultar primero `01_Dominio/`.** Las fórmulas, validaciones y prioridades de cálculo están documentadas ahí y son la fuente de verdad.
+

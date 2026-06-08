@@ -2,10 +2,16 @@
 tipo: modelo_bd
 tabla: orden_produccion
 estado: activo
-tags: [dominio, core, cabecera, produccion]
-relaciones:
-  - hijos: [[Lote_Color]], [[Registro_Diario]]
-  - snapshots: [[Snapshot_Composicion_Molde]]
+tags:
+  - dominio
+  - core
+  - cabecera
+  - produccion
+relaciones_hijos:
+  - "[[Lote_Color]]"
+  - "[[Registro_Diario]]"
+relaciones_snapshots:
+  - "[[Snapshot_Composicion_Molde]]"
 fecha_creacion: 2026-04-21
 ---
 

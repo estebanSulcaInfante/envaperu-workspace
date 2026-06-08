@@ -3,8 +3,8 @@ tipo: modelo_bd
 tabla: snapshot_composicion_molde
 estado: activo
 tags: [dominio, snapshot, molde, multipieza]
-relaciones:
-  - padre: [[Orden_Produccion]]
+relaciones_padre:
+  - "[[Orden_Produccion]]"
 fecha_creacion: 2026-04-21
 ---
 

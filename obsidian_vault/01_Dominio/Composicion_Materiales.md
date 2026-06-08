@@ -3,8 +3,8 @@ tipo: modelo_bd
 tabla: se_compone
 estado: activo
 tags: [dominio, materiales, mezcla, materia-prima]
-relaciones:
-  - padre: [[Lote_Color]]
+relaciones_padre:
+  - "[[Lote_Color]]"
 fecha_creacion: 2026-04-21
 ---
 

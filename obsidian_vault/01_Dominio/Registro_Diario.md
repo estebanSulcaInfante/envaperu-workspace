@@ -3,9 +3,11 @@ tipo: modelo_bd
 tabla: registro_diario_produccion
 estado: activo
 tags: [dominio, core, registro, turno, produccion]
-relaciones:
-  - padre: [[Orden_Produccion]]
-  - hijos: [[Detalle_Produccion_Hora]], [[Control_Peso]]
+relaciones_padre:
+  - "[[Orden_Produccion]]"
+relaciones_hijos:
+  - "[[Detalle_Produccion_Hora]]"
+  - "[[Control_Peso]]"
 fecha_creacion: 2026-04-21
 ---
 

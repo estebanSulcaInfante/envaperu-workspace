@@ -2,10 +2,17 @@
 tipo: modelo_bd
 tabla: lote_color
 estado: activo
-tags: [dominio, core, lote, color, produccion]
-relaciones:
-  - padre: [[Orden_Produccion]]
-  - hijos: [[Composicion_Materiales]], [[Receta_Colorantes]]
+tags:
+  - dominio
+  - core
+  - lote
+  - color
+  - produccion
+relaciones_padre:
+  - "[[Orden_Produccion]]"
+relaciones_hijos:
+  - "[[Composicion_Materiales]]"
+  - "[[Receta_Colorantes]]"
 fecha_creacion: 2026-04-21
 ---
 

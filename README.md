@@ -34,7 +34,7 @@ Es la Interfaz Gráfica utilizada por Administradores de Planta, Área Comercial
 
 Para ejecutar el entorno:
 ```bash
-cd frontend/envaperu-frontend
+cd frontend
 npm install
 npm run dev
 # Para pruebas
@@ -66,4 +66,4 @@ Ambos entornos, *Backend (Flask)* y *Frontend (React)*, siguen reglas BDD/SDD (B
 
 *   Evitar simulaciones vacías o "TDD rígido". En cambio, priorizar "Specs" que modelen el ecosistema de Producción de EnvaPeru (ej. Caso "Jarra Regadera": 1 Molde $\rightarrow$ 3 Piezas $\leftrightarrow$ 1 Producto Terminado).
 *   El backend en `backend/tests/test_spec_orden_produccion.py` verifica la integridad multi-pieza a nivel relacional (SQLAlchemy).
-*   El frontend en `frontend/envaperu-frontend/src/tests/` utiliza la arquitectura UI para emular la selección asíncrona y la renderización en forma de grilla multi-tabla.
+*   El frontend en `frontend/src/tests/` utiliza la arquitectura UI para emular la selección asíncrona y la renderización en forma de grilla multi-tabla.
