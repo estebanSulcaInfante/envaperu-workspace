@@ -1,0 +1,1 @@
+Necesito actualizar las vistas de catalogo de Molde pieza producto en base a los cambios realizados en el wizard de creacion agil. Por favor revisa la documentacion para entender la logica y estructura de datos actual y propon una nueva estructura de rutas para que se pueda implementar.

@@ -1,0 +1,1 @@
+Actualmente, el sistema permite crear Productos Terminados (Kits o Assemblies) automáticamente mediante el Wizard de Creación Ágil. Sin embargo, no existe una forma **manual** e intuitiva desde el Catálogo de Productos

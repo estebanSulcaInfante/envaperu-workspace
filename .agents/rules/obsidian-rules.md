@@ -10,21 +10,37 @@ Este proyecto tiene una bóveda de Obsidian en `obsidian_vault/` que funciona co
 ANTES de escribir código, modificar modelos, o responder preguntas sobre reglas de negocio, DEBES consultar las notas relevantes en la bóveda.
 
 ## Cómo Usar la Bóveda
-1. **Al iniciar cualquier tarea:** Lee `obsidian_vault/00_Meta/Arquitectura_Global.md` para contexto general.
-2. **Para reglas de negocio, fórmulas y modelos de BD:** Consulta `obsidian_vault/01_Dominio/` — cada entidad tiene su propia nota con campos, fórmulas, validaciones y relaciones.
-3. **Para convenciones de naming/unidades:** Consulta `obsidian_vault/00_Meta/Convenciones_Codigo.md`.
-4. **Para endpoints API:** Consulta `obsidian_vault/02_Backend/Endpoints/`.
-5. **Para entender flujos completos:** Consulta `obsidian_vault/10_Flujos_y_Procesos/`.
-6. **Para entender decisiones pasadas:** Consulta `obsidian_vault/20_Registro_Decisiones/`.
+Esta bóveda de Obsidian es la **memoria persistente y fuente de verdad** del proyecto EnvaPeru SCM. Todo conocimiento de dominio, decisiones arquitectónicas, reglas de negocio, contratos de API, y especificaciones de componentes se documentan aquí en formato Markdown con frontmatter YAML y enlaces bidireccionales `[[wikilinks]]`.
 
-## Regla de Actualización
-Cuando hagas cambios significativos al proyecto (nuevo modelo, nuevo endpoint, refactoring, decisión arquitectónica), ACTUALIZA o CREA la nota correspondiente en la bóveda usando las plantillas en `obsidian_vault/99_Plantillas/`.
+## Taxonomía de Carpetas
 
-## Notas Clave del Dominio (Core)
-- `01_Dominio/Orden_Produccion.md` — Cabecera global, cálculos cacheados, JSON de API
-- `01_Dominio/Lote_Color.md` — meta_kg como único input, coladas float
-- `01_Dominio/Registro_Diario.md` — Hoja de producción, snapshots, totalizadores
-- `01_Dominio/Control_Peso.md` — Doble verificación, validación con tolerancia 5Kg
+| Carpeta | Propósito | Cuándo Consultar |
+| :--- | :--- | :--- |
+| `00_Meta/` | Arquitectura global, convenciones, este archivo | Siempre al inicio de una sesión |
+| `01_Dominio/` | Modelos de BD, campos, fórmulas, reglas de negocio | Al trabajar con cualquier entidad |
+| `02_Backend/` | Endpoints API, servicios, lógica de servidor | Al modificar o crear endpoints |
+| `03_Frontend/` | Vistas, componentes, estado de UI | Al trabajar con la interfaz |
+| `04_Modulo_Pesaje/` | Hardware, integración balanza, UI de planta | Al trabajar con pesaje |
+| `05_Especificaciones/` | Pipeline de desarrollo (Drafts, User Stories, Tech Specs, Aprobado para Dev) | Al planificar, definir o comenzar a desarrollar un requerimiento |
+| `10_Flujos_y_Procesos/` | Casos de uso paso a paso | Para entender flujos completos |
+| `20_Registro_Decisiones/` | ADRs (Architecture Decision Records) | Para entender el "por qué" de decisiones |
+| `99_Plantillas/` | Templates para crear nuevas notas | Al documentar algo nuevo |
+
+## Cómo Leer las Notas
+- **Frontmatter YAML:** Cada nota tiene metadatos (`tipo`, `estado`, `tags`, `relaciones`) — úsalos para filtrar y navegar.
+- **`[[wikilinks]]`:** Seguir enlaces bidireccionales para entender dependencias entre entidades.
+- **Campos `calculo_*`:** Son persistidos en BD y se recalculan via `actualizar_metricas()`.
+- **Campos `snapshot_*`:** Son congelados al crear una entidad hija — no cambian retroactivamente.
+
+## Cómo Actualizar la Bóveda
+Cuando hagas cambios significativos al proyecto, **actualiza la nota correspondiente** en esta bóveda:
+
+1. **Nuevo modelo/tabla** → Crear en `01_Dominio/` usando `99_Plantillas/TPL_Modelo_BD.md`
+2. **Nuevo endpoint** → Crear en `02_Backend/Endpoints/` usando `99_Plantillas/TPL_Endpoint_API.md`
+3. **Nuevo componente UI** → Crear en `03_Frontend/Componentes/` usando `99_Plantillas/TPL_Componente_UI.md`
+4. **Decisión arquitectónica** → Crear ADR en `20_Registro_Decisiones/`
+5. **Cambio en reglas de negocio** → Actualizar la nota de dominio afectada
+6. **Planificación de requerimientos** → Usar la carpeta `05_Especificaciones/` y seguir el pipeline desde Draft hasta Aprobado para Dev.
 
 ## Regla Crítica
-NUNCA asumas reglas de negocio. Las fórmulas y validaciones en `01_Dominio/` son la fuente de verdad. Los campos `calculo_*` se persisten en BD. Los `snapshot_*` se congelan al crear entidades hijas.
+> **Nunca asumas reglas de negocio sin consultar primero `01_Dominio/`.** Las fórmulas, validaciones y prioridades de cálculo están documentadas ahí y son la fuente de verdad.

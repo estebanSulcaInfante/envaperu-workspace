@@ -1,0 +1,2 @@
+Se requiere poder crear en el forntend el la tripla Molde-Producto-Pieza de forma agil. Para esto ya existia catalogo/config. rapida.
+Sin embargo, se pone en duda su integridad en la creacion de estas triplas. Ademas toamr en cuenta la realidad productiva en la que los moldes deben contener la abstraccion de la forma del objeto y los colores son propiedades de las piezas, mas no de los moldes. Por otro lado familia de color es solo descriptivo para los ProductosTerminados lo cual no se tiene en cuenta para ningun conteo ni logica.
