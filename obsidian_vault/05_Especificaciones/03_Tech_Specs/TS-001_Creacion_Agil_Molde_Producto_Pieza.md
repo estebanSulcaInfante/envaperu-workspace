@@ -41,13 +41,14 @@ Esta especificación técnica cubre los cambios necesarios para:
 erDiagram
     Molde ||--o{ Pieza : "tiene formas"
     Pieza ||--o{ PiezaColor : "variantes coloreadas"
-    ColorProducto ||--o{ PiezaColor : "aplicado a formas"
+    COLOR_BASE ||--o{ COLOR_PRODUCCION : participa
+    FAMILIA_COLOR ||--o{ COLOR_PRODUCCION : clasifica
+    COLOR_PRODUCCION ||--o{ PiezaColor : "aplicado a formas"
     PiezaColor }o--o{ ProductoTerminado : "compone (via ProductoPieza)"
     PiezaColor ||--o{ PiezaComponente : "componente de kit"
     PiezaColor ||--o{ PiezaComponente : "es kit"
     Linea ||--o{ Pieza : "clasifica"
     Familia ||--o{ Pieza : "clasifica"
-    FamiliaColor ||--o{ ColorProducto : "agrupa"
 
     Molde {
         string codigo PK
@@ -306,7 +307,7 @@ sku_pieza = f"{base_sku}-{forma.nombre.upper().replace(' ', '-')[:10]}-C{color.c
 
 ### 4.4. [MODIFY] `GET /api/catalogo/validar-orden-prereq`
 
-**Cambio:** Usar `PiezaColor.color_id` en lugar de `ProductoTerminado.familia_color` para determinar compatibilidad Molde+Color → SKU existente (US-001b).
+**Cambio:** Usar `PiezaColor.color_id` en lugar de `ProductoTerminado.familia_color` para determinar compatibilidad Molde+Color → SKU existente (US-001b). Nota: `familia_color` no participa en la lógica de SKU, pero sí se reutilizará como clave de receta de composición (ver [[US-006_Normalizar_Composicion_Color_Familia]]).
 
 ---
 
@@ -559,7 +560,7 @@ alembic upgrade head
 | **Fase 2** | US-001a + US-001e | Refactor modelos SQLAlchemy + endpoint cascada | 🟡 Medio — requiere Fase 1 |
 | **Fase 3** | US-001d | Nuevos endpoints `GET lineas` / `GET familias` | 🟢 Bajo — aditivo |
 | **Fase 4** | US-001a | Frontend: mover colores, renombrar labels, cargar dinámico | 🟡 Medio — cambio UX |
-| **Fase 5** | US-001b | Verificar que `familia_color` no participa en lógica | 🟢 Bajo — solo auditoría |
+| **Fase 5** | US-001b | Verificar que `familia_color` no participa en lógica de SKU/wizard (sí se usa en recetas US-006) | 🟢 Bajo — solo auditoría |
 
 ---
 

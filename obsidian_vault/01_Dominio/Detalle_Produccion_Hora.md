@@ -17,7 +17,8 @@ Cada [[Registro_Diario]] tiene N filas de detalle, una por cada hora trabajada. 
 | Atributo | Origen | Descripción |
 | :--- | :--- | :--- |
 | **Hora** | Auto | Franja horaria (ej. "07:00 - 08:00"). |
-| **Maquinista** | Input | Nombre del operador en esa hora. |
+| **trabajador_id** | Input | FK al Catálogo de Trabajadores. |
+| **maquinista_snapshot** | Snapshot | Nombre del operador (histórico/congelado) para trazabilidad (TS-009). |
 | **Color** | Input | Color producido (puede cambiar por hora). |
 | **Coladas Realizadas** | Input | Cantidad de ciclos en esa hora. |
 | **Observación** | Input | Notas (parada, cambio de molde, etc.). |

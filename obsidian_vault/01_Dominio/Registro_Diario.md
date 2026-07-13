@@ -39,6 +39,8 @@ Se copian de la [[Orden_Produccion]] al momento de crear el registro para manten
 | **snapshot_cavidades** | Orden | Total de cavidades del golpe al crear el registro. |
 | **snapshot_peso_neto_gr** | Orden | Peso neto total del golpe (todas las piezas, gramos). |
 | **snapshot_peso_colada_gr** | Orden | Peso del ramal/colada (gramos). |
+| **maquina_codigo_snapshot** | Maquina | Código de la máquina en el momento (TS-009). |
+| **maquina_nombre_snapshot** | Maquina | Nombre de la máquina en el momento (TS-009). |
 
 ## Totalizadores (Calculados)
 

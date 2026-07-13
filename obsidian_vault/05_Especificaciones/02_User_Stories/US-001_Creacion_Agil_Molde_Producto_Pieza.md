@@ -27,7 +27,7 @@ Actualmente existe la vista **Catálogo > Configuración Rápida** (`/catalogo/c
 
 1. **Color asociado al nivel incorrecto.** En el flujo actual los colores se seleccionan en el paso del Molde (Paso 1). Conceptualmente, un molde es el bloque de acero — no tiene color. Los colores se combinan con las **Piezas (Formas puras)** para generar los SKUs físicos de inventario (**PiezaColor**), por lo que el color no es propiedad del molde en sí.
 
-2. **`FamiliaColor` en `ProductoTerminado` es solo descriptiva.** El campo `familia_color` del PT (SOLIDO, CARAMELO, TRANSPARENTE…) es meramente clasificatorio para el catálogo comercial. No debe participar en conteos, cálculos de producción ni lógica de generación de SKU en el wizard.
+2. **`FamiliaColor` en `ProductoTerminado` no participa en la lógica de SKU ni del wizard.** El campo `familia_color` del PT (SOLIDO, CARAMELO, TRANSPARENTE…) no debe influir en conteos, cálculos de producción ni generación de SKU en el wizard de creación en cascada. Sin embargo, `FamiliaColor` **sí tiene un rol funcional** como parte de la clave compuesta para las recetas de composición de color-familia (ver [[US-006_Normalizar_Composicion_Color_Familia]]).
 
 3. **Integridad cuestionable en la generación en cascada.** El endpoint `POST /api/catalogo/configurar-producto` presenta:
    - Variable `resultado` referenciada antes de ser definida (línea 745: `resultado['errores']` vs. `response_data`).
@@ -77,8 +77,10 @@ Actualmente existe la vista **Catálogo > Configuración Rápida** (`/catalogo/c
 ### US-001b: Familia de Color como campo descriptivo (no funcional)
 
 **Como** Supervisor de Planta  
-**Quiero** que `familia_color` en `ProductoTerminado` sea solo un campo informativo de clasificación  
-**Para** que no interfiera con la lógica de producción, conteos o generación de SKU
+**Quiero** que `familia_color` en `ProductoTerminado` no interfiera con la lógica de SKU ni del wizard  
+**Para** que no cause falsos negativos en la validación de OP ni en la creación en cascada
+
+> **Nota (US-006):** Aunque `familia_color` no participa en la lógica de SKU, sí se reutiliza como parte de la clave compuesta `(color_id, familia_color_id, variante)` para las recetas de composición de color. Ver [[US-006_Normalizar_Composicion_Color_Familia]].
 
 #### Criterios de Aceptación
 
@@ -170,7 +172,7 @@ Actualmente existe la vista **Catálogo > Configuración Rápida** (`/catalogo/c
 |---|--------|---------|---------------------|
 | 1 | Colores en el paso del Molde | Modelo conceptual incorrecto | Mover selector después de formas → **US-001a** |
 | 2 | `Pieza.color_id` independiente por variante | Permite combinaciones imposibles (Tapa Roja + Pico Azul mismo molde) | Color por colada, no por SKU individual → **US-001a** + **US-001e** |
-| 3 | `familia_color` usada en lógica de match | Falsos negativos en validación de OP | Ignorar en lógica, solo descriptiva → **US-001b** |
+| 3 | `familia_color` usada en lógica de match de SKU | Falsos negativos en validación de OP | No usar en lógica de SKU/wizard → **US-001b**. Nota: sí se usa como clave de receta en **US-006**. |
 | 4 | Bug `resultado` vs `response_data` | `NameError` en runtime si molde ya existe | Unificar nombres → **US-001c** |
 | 5 | `db.session.add` duplicado para Kit | Kit insertado 2 veces → `IntegrityError` | Eliminar duplicado → **US-001c** |
 | 6 | SKU con truncamiento `[:10]` | Colisiones potenciales entre formas con nombres similares | Usar esquema determinista → **US-001c** |
