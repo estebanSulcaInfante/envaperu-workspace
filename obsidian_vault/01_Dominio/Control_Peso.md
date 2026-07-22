@@ -26,6 +26,8 @@ Sistema de pesaje individual de "bultos" para contrastar con la producción repo
 
 ## Validación de Peso
 
+> **Nota de alcance 2026-07-15:** esta validación compara bultos de producción contra lo reportado en `Registro_Diario`. La regla legacy de `5 kg` no es una tolerancia de recepción de materias primas y no debe reutilizarse como valor de `C-TOL-01`. Su vigencia debe revisarse en la historia de pesaje/salida correspondiente.
+
 | Métrica | Descripción | Fórmula |
 | :--- | :--- | :--- |
 | **Total Pesado** | Suma de todos los bultos. | `SUM(peso_real_kg)` |

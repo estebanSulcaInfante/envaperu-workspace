@@ -1,18 +1,23 @@
 ---
 tipo: user-story
-estado: propuesta
+estado: implementada
 tags: [catalogo, trabajadores, maquinistas, maquinas, frontend, backend, normalizacion, trazabilidad]
 relaciones:
   - "[[US-002_Refactor_CRUD_Molde_Pieza_Producto]]"
   - "[[US-003_Creacion_Manual_Producto_Terminado]]"
   - "[[US-008_Normalizacion_ColorProduccion]]"
+  - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
   - "[[Registro_Diario]]"
   - "[[Detalle_Produccion_Hora]]"
   - "[[Orden_Produccion]]"
 fecha_creacion: 2026-07-12
+fecha_implementacion: 2026-07-13
 ---
 
 # US-009: Normalizar Trabajadores y Máquinas y Actualizar las Vistas de Catálogo
+
+> [!IMPORTANT] Corrección del catálogo de piezas
+> [[TS-012_Normalizacion_Relacion_Molde_Pieza_NM|TS-012]] sustituye cualquier columna o formulario que trate molde, cavidades o peso operativo como atributos del maestro `Pieza`. La vista de piezas administra datos globales; esos valores se consultan y editan en la composición `MoldePieza` de cada molde.
 
 ## 1. Descripción
 

@@ -4,6 +4,7 @@ id: US-007
 titulo: Normalizar ProductoTerminado, PiezaColor y Salidas de la OP
 estado: propuesta
 fecha_creacion: 2026-07-11
+fecha_actualizacion: 2026-07-23
 tags:
   - dominio
   - normalizacion
@@ -13,11 +14,14 @@ tags:
   - lote-color
   - produccion
 relaciones:
+  - "[[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]]"
   - "[[US-001_Creacion_Agil_Molde_Producto_Pieza]]"
   - "[[US-002_Refactor_CRUD_Molde_Pieza_Producto]]"
   - "[[US-003_Creacion_Manual_Producto_Terminado]]"
   - "[[US-005_Vista_Impresion_Web_OP]]"
   - "[[US-006_Normalizar_Composicion_Color_Familia]]"
+  - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
+  - "[[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD]]"
   - "[[Orden_Produccion]]"
   - "[[Lote_Color]]"
   - "[[Snapshot_Composicion_Molde]]"
@@ -26,6 +30,15 @@ reemplaza_modelo_previo: true
 ---
 
 # US-007: Normalizar ProductoTerminado, PiezaColor y Salidas de la OP
+
+> [!IMPORTANT] Decisión ya confirmada
+> La posibilidad que esta historia dejó pendiente de validar quedó resuelta en [[TS-012_Normalizacion_Relacion_Molde_Pieza_NM|TS-012]]: una `Pieza` puede participar en varios moldes mediante `MoldePieza`. Cavidades y peso operativo pertenecen a esa asociación; `PiezaColor` sigue siendo global por pieza y color.
+
+> [!IMPORTANT] Clasificación normalizada
+> [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD|TS-014]] confirma que Línea y Familia se relacionan N:M. Todo par persistido en `ProductoTerminado`, `Pieza` o compatibilidad legacy de `PiezaColor` debe corresponder a una asociación activa; `PiezaColor` continúa derivando su clasificación canónica desde `Pieza`.
+
+> [!NOTE] Avance de OP al 2026-07-23
+> La identidad canónica del snapshot es `pieza_id` y se congelan código y nombre de la pieza. El SKU anterior queda como `pieza_sku_legacy`, nullable y sin FK, solo para evidencia de reconciliación. Además, las OP nuevas ya crean un `LoteSalidaPiezaColor` por combinación lote–pieza, con `PiezaColor` exacto y objetivos congelados de unidades y kg netos. En `enva_test` la revisión `d7e9a4c2f105` migró cinco snapshots de demostración: cuatro llegaron de forma exacta hasta `Pieza` y uno quedó deliberadamente sin resolver. No existen OP legacy reales; por ello su backfill y certificación siguen condicionados a la primera prueba controlada. Ejecución horaria, pesaje e inventario todavía deben enlazarse a estas salidas.
 
 ## 1. Corrección Conceptual
 
@@ -130,7 +143,7 @@ Los campos actuales `familia_color`, `cod_familia_color` y `familia_color_id` de
 | 15 | `ControlPeso` no identifica de forma obligatoria la `PiezaColor` del bulto | Un peso no puede aplicarse con seguridad a una salida específica |
 | 16 | El fallback de kilos usa peso de tiro, pero los bultos contienen piezas netas | Se comparan magnitudes distintas: salida buena versus piezas más ramal |
 | 17 | Cavidades y peso se copian en `PiezaColor` además de existir en `Pieza` | Los catálogos pueden divergir sin una fuente de verdad clara |
-| 18 | Línea y familia de producto se duplican en `Pieza` y `PiezaColor` | Una variante física puede quedar clasificada de forma distinta a su forma base |
+| 18 | Línea y familia se duplican en `Pieza` y `PiezaColor`, sin validar su asociación N:M | Una variante puede contradecir su forma base o usar un par no autorizado |
 
 ## 6. Modelo Normalizado Objetivo
 
@@ -144,7 +157,7 @@ Campos relevantes:
 - `molde_id`
 - `codigo` o identificador estable
 - `nombre`
-- `linea_id` y `familia_id` opcionales, solo si clasifican técnicamente la forma
+- `linea_id` y `familia_id` opcionales, solo si clasifican técnicamente la forma y siempre como un par activo de `LineaFamilia`
 - `cavidades`
 - `peso_unitario_gr`
 - `activo`
@@ -217,7 +230,7 @@ Datos derivados, no duplicados:
 - nombre: `Pieza.nombre + ColorProducto.nombre`;
 - cavidades: desde `Pieza` o snapshot de OP;
 - peso estándar: desde `Pieza` o snapshot de OP;
-- clasificación técnica: desde `Pieza`, sin duplicar `linea_id` ni `familia_id`;
+- clasificación técnica: desde `Pieza`, cuyo par `linea_id + familia_id` debe estar activo en `LineaFamilia`, sin duplicarlo definitivamente en la variante;
 - familia de color: desde `ColorProducto.familia_color_id`.
 
 La línea y familia comerciales pertenecen a `ProductoTerminado`; no deben copiarse al SKU de pieza desde el producto que circunstancialmente la utiliza.
@@ -246,6 +259,8 @@ Elimina:
 - `familia_color_id`
 
 El SKU es un identificador inmutable y no debe recalcularse automáticamente desde la familia de color.
+
+La combinación `linea_id + familia_id` es obligatoria y debe existir activa en `LineaFamilia`, conforme a [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD|TS-014]].
 
 ### 6.6. `ProductoPieza`
 
@@ -279,10 +294,19 @@ Campos:
 - `pieza_nombre_snapshot`
 - `cavidades`
 - `peso_unit_gr`
+- `pieza_sku_legacy` nullable y sin FK, únicamente durante la transición
 
-Se elimina `pieza_sku` como FK a `PiezaColor`.
+La migración estructural elimina `pieza_sku` como FK a `PiezaColor`. Su texto previo se renombra a `pieza_sku_legacy` para conservar evidencia importada sin mantener una relación referencial incorrecta.
 
 Los textos snapshot se conservan para que la historia siga legible aunque la pieza sea renombrada o desactivada.
+
+Reglas de escritura y transición:
+
+- toda OP creada por el flujo vigente guarda `pieza_id`, `pieza_codigo_snapshot` y `pieza_nombre_snapshot`;
+- las OP nuevas dejan `pieza_sku_legacy` en `NULL`;
+- `pieza_id` es nullable solo para permitir cargar y diagnosticar una fila legacy todavía no conciliada;
+- ningún proceso de negocio usa `pieza_sku_legacy` para resolver color, inventario o salida física;
+- la reconciliación solo asigna `pieza_id` cuando `pieza_sku_legacy -> PiezaColor -> Pieza` sea unívoco.
 
 ### 6.8. `LoteColor`
 
@@ -384,6 +408,7 @@ erDiagram
 14. El detalle horario debe identificar el `LoteColor` ejecutado.
 15. Cada bulto pesado debe identificar la salida o, como mínimo, la `PiezaColor` y el lote.
 16. Peso neto bueno, peso de ramal/merma y peso bruto consumido son métricas diferentes.
+17. Toda clasificación `linea_id + familia_id` debe corresponder a una asociación `LineaFamilia` activa; una variante no contradice a su Pieza.
 
 ## 9. Flujo Objetivo
 
@@ -409,12 +434,15 @@ Ese servicio:
 
 ### 9.2. Creación de Orden de Producción
 
-1. El usuario selecciona el molde.
-2. El sistema congela sus `Pieza` en `SnapshotComposicionMolde`.
-3. El usuario agrega uno o varios colores y metas, creando `LoteColor`.
-4. Para cada lote, el sistema recorre todas las piezas snapshot.
-5. Para cada combinación pieza-color, resuelve o crea la `PiezaColor` correspondiente.
-6. Crea una `LoteSalidaPiezaColor` por cada resultado físico.
+En el flujo normal, [[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]] calcula primero los faltantes desde demanda de `ProductoTerminado` y entrega una propuesta técnica. La creación directa por molde queda como una excepción documentada para reposición de `PiezaColor`, muestras o reemplazos.
+
+1. El sistema recibe una propuesta o un propósito manual con motivo.
+2. El usuario confirma el molde.
+3. El sistema congela sus `Pieza`, cavidades y pesos en `SnapshotComposicionMolde`.
+4. Se agregan uno o varios `ColorProduccion`, cada uno como lote separado y con ciclos enteros planificados.
+5. Para cada lote, el sistema recorre todas las piezas snapshot.
+6. Para cada combinación pieza-color, resuelve la `PiezaColor` correspondiente.
+7. Crea una `LoteSalidaPiezaColor` por cada resultado físico y calcula unidades, kg y excedentes.
 
 Ejemplo:
 
@@ -432,11 +460,13 @@ Salidas:
 
 La OP produce `PiezaColor`; no debe asumir que un golpe equivale automáticamente a un paquete terminado.
 
-`ProductoTerminado` puede utilizarse como:
+`ProductoTerminado` se utiliza como:
 
-- demanda u objetivo comercial opcional de la OP;
+- origen normal de demanda en US-010P, sin convertirse en salida física de la OP;
 - validación de que las salidas planificadas cubren su BOM;
 - cálculo de paquetes potencialmente armables.
+
+Una OP manual puede no tener demanda de `ProductoTerminado`, pero exige propósito y motivo. Una OP asociada a demanda puede cubrir varios productos o solicitudes, por lo que la relación es N:M y no un `producto_sku` singular.
 
 Fórmula de paquetes completos potenciales:
 
@@ -581,6 +611,18 @@ Una sugerencia histórica nunca reemplaza silenciosamente una fórmula aprobada.
 **Entonces** se conservan los SKUs de producto y pieza  
 **Y** los snapshots históricos mantienen nombres, cavidades, pesos y colores originalmente ejecutados.
 
+### Escenario 13: Primera OP legacy controlada
+
+**Dado** que la estructura canónica ya está instalada, pero aún no existen OP reales del esquema anterior
+
+**Cuando** se incorpore la primera OP legacy en un entorno de prueba controlado
+
+**Entonces** el sistema conserva `pieza_sku_legacy` como evidencia y propone `pieza_id` solo mediante una resolución unívoca `PiezaColor -> Pieza`
+
+**Y** cualquier fila ambigua o sin correspondencia queda reportada, no inventada
+
+**Y** no se endurece `pieza_id` a `NOT NULL` hasta aprobar la reconciliación.
+
 ## 12. Estrategia de Migración
 
 1. Auditar `ColorProducto` sin familia y asignar o marcar los casos ambiguos.
@@ -591,13 +633,44 @@ Una sugerencia histórica nunca reemplaza silenciosamente una fórmula aprobada.
 6. Mantener la BOM `ProductoTerminado -> PiezaColor`; renombrar columnas y tabla para mayor claridad si se aprueba.
 7. Derivar y comparar las familias de los componentes contra los campos actuales de `ProductoTerminado`.
 8. Conservar los SKUs existentes y retirar `familia_color`, `cod_familia_color` y `familia_color_id` del producto.
-9. Cambiar el snapshot de `pieza_sku` a `pieza_id`, copiando nombre, cavidades y peso como datos históricos.
+9. **Realizado en estructura:** cambiar el snapshot de `pieza_sku` a `pieza_id`, congelar código y nombre, y conservar el texto previo como `pieza_sku_legacy` nullable sin FK.
 10. Crear `LoteSalidaPiezaColor` y poblarla para OPs migrables usando snapshot más color del lote.
 11. Eliminar `OrdenProduccion.calculo_familia_color`.
 12. Vincular detalles horarios con `lote_color_id`.
 13. Vincular controles de peso con lote y salida/pieza-color.
 14. Separar métricas de kg netos buenos, kg de ramal y kg brutos.
 15. Ejecutar reconciliación de conteos, pesos, BOMs y SKUs antes de eliminar columnas legacy.
+
+### 12.1. Pendiente condicionado: backfill de la primera OP legacy
+
+No se certificó un backfill de negocio al aplicar la migración estructural porque el sistema todavía no contiene OP legacy reales. La migración técnica se verificó en `enva_test` con cinco snapshots locales de demostración: preservó las cinco evidencias SKU, resolvió cuatro por clave exacta y dejó sin inferir `OP-1322 / 10101-BALDE`, cuya `PiezaColor` existía pero no estaba vinculada a una `Pieza` abstracta. Esta fila es evidencia de desarrollo, no una OP histórica certificada.
+
+La siguiente lista se activa cuando se disponga de la primera OP legacy real de prueba o de un restore anonimizado que la contenga.
+
+#### Preparación
+
+- [ ] Trabajar sobre un backup, fixture o restore controlado; no experimentar directamente sobre una base desplegada.
+- [ ] Registrar conteos iniciales de OP y filas de `snapshot_composicion_molde` y conservar una copia verificable de sus valores.
+- [ ] Ejecutar primero un modo diagnóstico que no escriba y clasifique cada fila como `RESOLUBLE`, `AMBIGUA` o `SIN_CORRESPONDENCIA`.
+- [ ] Verificar que `pieza_sku_legacy` se resuelva por clave exacta a una `PiezaColor` y de allí a una única `Pieza`; nombres parecidos no constituyen identidad.
+
+#### Ejecución
+
+- [ ] Poblar `pieza_id`, `pieza_codigo_snapshot` y `pieza_nombre_snapshot` únicamente para filas `RESOLUBLE`.
+- [ ] Mantener sin cambios `orden_id`, `pieza_sku_legacy`, cavidades y peso unitario históricos.
+- [ ] No seleccionar la primera variante, no crear piezas por texto y no completar una fila ambigua por heurística.
+- [ ] Emitir un reporte por OP con mapeo aplicado, filas omitidas, motivo y totales antes/después.
+- [ ] Asegurar transacción reversible e idempotencia: una segunda ejecución no crea cambios adicionales.
+
+#### Criterios de aceptación
+
+- [ ] El número de OP y de filas snapshot es idéntico antes y después.
+- [ ] Los cálculos históricos de peso neto por golpe y cavidades totales no cambian.
+- [ ] Toda fila marcada `RESOLUBLE` queda vinculada a la `Pieza` exacta derivada de su `PiezaColor` legacy.
+- [ ] Toda fila no conciliable conserva su evidencia y aparece explícitamente en el reporte; la migración no inventa genealogía.
+- [ ] Las OP creadas con el flujo nuevo completan los campos canónicos y dejan `pieza_sku_legacy` en `NULL`.
+- [ ] Las pruebas cubren éxito, SKU inexistente, correspondencia ambigua, rollback e idempotencia.
+- [ ] Solo con cero filas pendientes en el universo que se vaya a migrar puede proponerse `pieza_id NOT NULL`; retirar `pieza_sku_legacy` requiere además una decisión separada de retención histórica.
 
 ## 13. Impacto en Historias y Documentos
 
@@ -611,7 +684,7 @@ Una sugerencia histórica nunca reemplaza silenciosamente una fórmula aprobada.
 | ADR FamiliaColor | Sustituir la conclusión que preserva `familia_color_id` en `ProductoTerminado` |
 | `Orden_Produccion` | Eliminar familia de color cacheada y exponer salidas por lote |
 | `Lote_Color` | Agregar relación con sus múltiples salidas `PiezaColor` |
-| `Snapshot_Composicion_Molde` | Cambiar FK de `PiezaColor` a `Pieza` |
+| `Snapshot_Composicion_Molde` | Estructura cambiada de FK a `PiezaColor` hacia FK canónica a `Pieza`; backfill real sujeto al checklist de la primera OP legacy |
 | `Registro_Diario` | Desglosar cantidades por salida física |
 | `Detalle_Produccion_Hora` | Reemplazar color texto por `lote_color_id` |
 | `Control_Peso` | Identificar lote, salida y SKU de pieza pesados |
@@ -641,7 +714,7 @@ No incluye todavía:
 2. Registrar una ADR que sustituya la decisión actual sobre FamiliaColor.
 3. Normalizar `ColorProducto` y `PiezaColor`.
 4. Corregir `ProductoTerminado` y migrar kits/BOM.
-5. Corregir snapshots de OP.
+5. Corregir snapshots de OP: estructura realizada; backfill y reconciliación real pendientes según §12.1.
 6. Implementar `LoteSalidaPiezaColor` y el resolver de SKU.
 7. Adaptar registro diario, pesajes e impresión.
 8. Retirar campos y rutas legacy después de reconciliar datos.

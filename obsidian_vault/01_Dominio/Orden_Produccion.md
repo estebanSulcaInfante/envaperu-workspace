@@ -13,6 +13,7 @@ relaciones_hijos:
 relaciones_snapshots:
   - "[[Snapshot_Composicion_Molde]]"
 fecha_creacion: 2026-04-21
+fecha_actualizacion: 2026-07-22
 ---
 
 # Orden de Producción (Cabecera Global)
@@ -90,10 +91,12 @@ Endpoint: `GET /api/ordenes/<id>`
     "peso_neto_golpe_gr": 174.0,
     "peso_tiro_gr": 176.0,
     "cavidades_totales": 2,
-    "composicion": [
+      "composicion": [
       {
-        "pieza_sku": "PIE-001",
-        "pieza_nombre": "Balde Romano Cuerpo",
+        "pieza_id": 17,
+        "pieza_codigo_snapshot": "PZ-000017",
+        "pieza_nombre_snapshot": "Balde Romano Cuerpo",
+        "pieza_sku_legacy": null,
         "cavidades": 2,
         "peso_unit_gr": 87.0,
         "peso_subtotal_gr": 174.0
@@ -119,3 +122,12 @@ Endpoint: `GET /api/ordenes/<id>`
 - **Hijos directos:** [[Lote_Color]] (1:N), [[Registro_Diario]] (1:N)
 - **Snapshots:** [[Snapshot_Composicion_Molde]] (1:N)
 - **FKs:** `ProductoTerminado`, `Molde`, `Maquina`
+
+## Impresión A4: fotografía de requisitos
+
+La impresión de una OP representa lo planificado antes de producir. Su cabecera incluye producto, máquina, molde, inicio programado, fin estimado, meta neta, merma técnica, ciclo, golpes por hora, horas por turno y pesos del tiro. Los lotes muestran receta aplicada, materiales, pigmentos y salidas objetivo.
+
+No se imprimen `activa`, producción real ni avance acumulado: son estado operativo posterior, no requisitos de fabricación. La composición usa las cavidades por pieza de [[MoldePieza]] reflejadas en el snapshot, nunca un total global ambiguo.
+
+> [!NOTE] Compatibilidad de snapshots
+> `pieza_sku_legacy` no identifica la salida física vigente y las OP nuevas lo dejan en `NULL`. Se conserva sin FK solo para reconciliar una eventual OP del esquema anterior; véase [[../05_Especificaciones/02_User_Stories/US-007_Normalizar_ProductoTerminado_PiezaColor_Salidas_OP#12.1. Pendiente condicionado: backfill de la primera OP legacy|US-007 §12.1]].

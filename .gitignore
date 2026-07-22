@@ -1,1 +1,4 @@
 obsidian_vault/.obsidian/
+__pycache__/
+*.py[cod]
+.codex-tmp/

@@ -60,10 +60,62 @@ Este Workspace utiliza una **bóveda de Obsdian (`obsidian_vault/`)** paralela a
 
 ---
 
-## Testing y SDD (Spec-Driven Development)
+## ATDD/BDD + TDD
 
-Ambos entornos, *Backend (Flask)* y *Frontend (React)*, siguen reglas BDD/SDD (Behavior/Spec-Driven).
+El proyecto combina especificación por ejemplos con desarrollo guiado por pruebas:
 
-*   Evitar simulaciones vacías o "TDD rígido". En cambio, priorizar "Specs" que modelen el ecosistema de Producción de EnvaPeru (ej. Caso "Jarra Regadera": 1 Molde $\rightarrow$ 3 Piezas $\leftrightarrow$ 1 Producto Terminado).
-*   El backend en `backend/tests/test_spec_orden_produccion.py` verifica la integridad multi-pieza a nivel relacional (SQLAlchemy).
-*   El frontend en `frontend/src/tests/` utiliza la arquitectura UI para emular la selección asíncrona y la renderización en forma de grilla multi-tabla.
+1. **ATDD/BDD:** las User Stories describen comportamientos observables con datos realistas, incluidos errores, reintentos y correcciones.
+2. **Tech Spec:** concreta contratos y asigna cada escenario al nivel de prueba adecuado.
+3. **BASELINE:** la suite existente debe estar verde o sus fallos previos deben quedar aislados y documentados.
+4. **RED:** se escribe una prueba que falla por la ausencia del comportamiento esperado.
+5. **GREEN:** se implementa el mínimo código necesario para hacerla pasar.
+6. **REFACTOR:** se mejora el diseño manteniendo toda la regresión verde.
+
+Las pruebas deben proteger comportamiento y reglas del dominio, no reproducir mocks vacíos ni acoplarse innecesariamente a detalles internos. El caso “Jarra Regadera”, por ejemplo, debe demostrar el comportamiento `1 Molde -> N PiezasColor -> BOM de ProductoTerminado` en los niveles donde realmente pueda romperse.
+
+- El backend utiliza `pytest`; las reglas relacionales rápidas pueden usar fixtures en memoria y las garantías específicas de transacción/concurrencia deben probarse también contra PostgreSQL.
+- El frontend utiliza `vitest` y Testing Library para interacciones observables.
+- El módulo de pesaje necesita pruebas propias de operación offline, idempotencia y sincronización.
+- Los recorridos E2E deben ser pocos y representativos; las combinaciones pertenecen a niveles de prueba más rápidos.
+
+### Comandos Versionados
+
+Preparar los entornos de prueba con Python 3.12 y npm:
+
+```powershell
+.\scripts\bootstrap-tests.ps1 -Component all
+```
+
+Si `node_modules` ya existe, el bootstrap valida el árbol de dependencias y conserva la instalación activa. Para forzar una reinstalación reproducible con `npm ci`, primero detén el servidor Vite y ejecuta:
+
+```powershell
+.\scripts\bootstrap-tests.ps1 -Component frontend -CleanFrontend
+```
+
+Ejecutar la línea base completa:
+
+```powershell
+.\scripts\test.ps1 -Component all
+```
+
+También se puede seleccionar `backend`, `frontend` o `pesaje`. El perfil PostgreSQL es opt-in y requiere Docker:
+
+```powershell
+.\scripts\test.ps1 -Component backend -Postgres
+```
+
+La suite rápida excluye E2E, hardware y PostgreSQL. Estos perfiles solo se ejecutan de forma explícita para evitar conexiones accidentales con servicios o dispositivos reales.
+
+Validar el contrato actual entre backend central y pesaje, incluidas sus copias versionadas:
+
+```powershell
+.\scripts\test-contracts.ps1
+```
+
+Ejecutar el recorrido HTTP aislado con bases temporales y puertos dinámicos:
+
+```powershell
+.\scripts\test-sync-e2e.ps1
+```
+
+El contrato se denomina `sync-pesajes-legacy-v1` deliberadamente: caracteriza la integración existente, pero no reemplaza el futuro contrato idempotente definido por US-010.

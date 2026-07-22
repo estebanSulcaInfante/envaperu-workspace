@@ -29,6 +29,6 @@ Catálogo maestro de colores estandarizados para uso en la producción (ej. Rojo
 - La combinación de `codigo` y `nombre` permite definir un catálogo estandarizado (ej. 10 - ROJO).
 
 ## Relaciones
-- **Padre:** `FamiliaColor`, `ColorBase`
-- **Hijos:** `ProductoTerminado`, `PiezaColor`
-- **FK:** `familia_color`, `color_base`
+- **Padres:** [[FamiliaColor]] y [[ColorBase]].
+- **Hijos:** [[PiezaColor]] y [[RecetaColorMaestra]].
+- **No es hijo directo:** [[ProductoTerminado]] obtiene sus colores mediante su BOM de `PiezaColor`.

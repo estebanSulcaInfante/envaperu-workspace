@@ -1,9 +1,10 @@
 ---
 tipo: tech-spec
-estado: draft
+estado: implementada
 tags: [catalogo, trabajadores, maquinistas, maquinas, frontend, backend, normalizacion, trazabilidad]
 user_story: "[[US-009_Normalizar_Trabajadores_Maquinas_y_Vistas_Catalogo]]"
 fecha_creacion: 2026-07-12
+fecha_implementacion: 2026-07-13
 ---
 
 # TS-009: Normalizar Trabajadores y Máquinas y Actualizar las Vistas de Catálogo

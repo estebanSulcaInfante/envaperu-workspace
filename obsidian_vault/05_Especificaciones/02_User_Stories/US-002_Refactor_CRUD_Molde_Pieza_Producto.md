@@ -4,9 +4,13 @@ estado: en-refinamiento
 tags: [catalogo, frontend, backend, refactor, crud]
 relaciones: 
   - "[[US-001_Creacion_Agil_Molde_Producto_Pieza]]"
+  - "[[TS-013_Codigos_Correlativos_Automaticos_Catalogo]]"
 ---
 
 # US-002: Actualización del CRUD de Molde, Pieza y Producto (Post-Refactoring Ágil)
+
+> [!IMPORTANT] Decisión posterior aprobada
+> [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]] resuelve la laguna de generación: los SKU nuevos no se derivan de línea, familia o color. El backend asigna un correlativo `PC-NNNNNN`, y el formulario no admite entrada manual.
 
 ## 1. Contexto y Borrador Original
 **Borrador (Draft):** "Necesito actualizar las vistas de catalogo de Molde pieza producto en base a los cambios realizados en el wizard de creacion agil. Por favor revisa la documentacion para entender la logica y estructura de datos actual y propon una nueva estructura de rutas para que se pueda implementar."
@@ -27,8 +31,8 @@ Debido a esto, las vistas actuales del CRUD ("Mantenimiento" o catálogo) en el 
     *   *Laguna:* ¿Debe el usuario editar las Formas y Colores en la misma vista del Molde, o tener tablas maestras separadas para Formas (`Pieza`) y SKUs (`PiezaColor`)? 
     *   *Resolución Propuesta:* Es mejor una vista maestra enfocada en el **Molde**. Al entrar a un Molde, se deberían listar sus **Formas** (`Pieza`), y anidadas a estas Formas, se listarían las **Variantes de Color** (`PiezaColor`).
 2.  **Generación de SKUs en Edición:** 
-    *   *Laguna:* Si el usuario añade un nuevo color a una forma existente desde el CRUD, ¿se auto-genera el SKU usando la regla `F{linea}-{familia}-{correlativo}-{color}` igual que en Creación Ágil?
-    *   *Resolución Propuesta:* Sí, toda adición de color debe reutilizar la misma lógica de negocio del servicio `catalogo_service.py` para asegurar que las restricciones UNIQUE del modelo relacional se respeten.
+    *   *Laguna resuelta:* Si el usuario añade un nuevo color a una forma existente desde el CRUD, ¿cómo se identifica la nueva `PiezaColor`?
+    *   *Resolución aprobada:* El backend asigna el siguiente `PC-NNNNNN` mediante el servicio común de [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]]; no deriva el SKU de atributos del formulario.
 3.  **Integridad al Eliminar (DELETE):**
     *   *Laguna:* Si una `PiezaColor` o un `Molde` se borran, ¿qué ocurre si ya existen Órdenes de Producción o registros de Inventario asociados?
     *   *Resolución Propuesta:* El CRUD debe soportar borrado lógico o fallar gracefully si se viola una ForeignKey constraint (mostrando una alerta amigable de que "El ítem tiene histórico de producción").

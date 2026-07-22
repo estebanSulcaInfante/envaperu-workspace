@@ -15,9 +15,16 @@ fecha_creacion: 2026-06-08
 actores:
   - Supervisor de Planta
   - Planificador de Producción
+relaciones:
+  - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
+  - "[[TS-013_Codigos_Correlativos_Automaticos_Catalogo]]"
+  - "[[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD]]"
 ---
 
 # US-001: Creación Ágil de Molde-Producto-Pieza
+
+> [!IMPORTANT] Corrección de clasificación aprobada
+> [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD|TS-014]] confirma que Línea y Familia se relacionan N:M mediante `LineaFamilia`. Las listas ya no son constantes del frontend y el par se valida en backend. La misma TS incorpora su CRUD lógico/versionado.
 
 ## Contexto y Motivación
 
@@ -121,23 +128,30 @@ Actualmente existe la vista **Catálogo > Configuración Rápida** (`/catalogo/c
 
 ---
 
-### US-001d: Líneas y Familias dinámicas desde el backend
+### US-001d: Líneas y Familias dinámicas y administrables
 
-**Como** Planificador de Producción  
-**Quiero** que las listas de Líneas y Familias en el wizard provengan del backend  
-**Para** que si se agrega una nueva Línea o Familia en la BD, el frontend la refleje automáticamente sin necesidad de un despliegue
+**Como** Administrador de Catálogo y Planificador de Producción
+**Quiero** administrar Líneas, Familias y sus asociaciones N:M, y consumir esas listas desde el backend
+**Para** reflejar cambios del catálogo sin desplegar el frontend y seleccionar únicamente combinaciones autorizadas
 
 #### Criterios de Aceptación
 
 **Escenario 1: Cargar Líneas y Familias al abrir el wizard**
 - **Dado** que el usuario navega a `/catalogo/configurar`
 - **Cuando** el componente `ConfigurarProducto` se monta
-- **Entonces** se realizan llamadas `GET /api/catalogo/lineas` y `GET /api/catalogo/familias` para obtener las opciones actualizadas de la BD
+- **Entonces** obtiene las Líneas activas mediante `GET /api/catalogo/lineas` y, al seleccionar una, consulta sus Familias activas desde el backend
 
 **Escenario 2: Filtrar Familias por Línea seleccionada**
 - **Dado** que el usuario selecciona la Línea "HOGAR"
 - **Cuando** el Autocomplete de Familias se actualiza
-- **Entonces** solo muestra las familias cuyo `linea_id` corresponde a la Línea seleccionada (ya existe en frontend, solo falta alimentar desde backend)
+- **Entonces** solo muestra las Familias cuya asociación `LineaFamilia` con HOGAR está activa
+- **Y** el backend rechaza cualquier par no asociado aunque se omita el filtro del frontend
+
+**Escenario 3: Mantener los catálogos y sus asociaciones**
+- **Dado** un administrador en la vista de clasificación
+- **Cuando** crea o edita Líneas y Familias, o asocia una misma Familia a varias Líneas
+- **Entonces** el cambio queda disponible para los formularios sin desplegar frontend
+- **Y** las bajas y desasociaciones son lógicas, versionadas y se bloquean si dejarían referencias existentes con un par inválido
 
 ---
 
@@ -176,7 +190,7 @@ Actualmente existe la vista **Catálogo > Configuración Rápida** (`/catalogo/c
 | 4 | Bug `resultado` vs `response_data` | `NameError` en runtime si molde ya existe | Unificar nombres → **US-001c** |
 | 5 | `db.session.add` duplicado para Kit | Kit insertado 2 veces → `IntegrityError` | Eliminar duplicado → **US-001c** |
 | 6 | SKU con truncamiento `[:10]` | Colisiones potenciales entre formas con nombres similares | Usar esquema determinista → **US-001c** |
-| 7 | Líneas/Familias hardcodeadas en frontend | Desfase con BD | Cargar desde API → **US-001d** |
+| 7 | Líneas/Familias hardcodeadas y sin relación persistida | Desfase con BD y combinaciones no verificables | CRUD y asociación N:M desde API → **US-001d** + **TS-014** |
 
 ---
 
@@ -185,6 +199,7 @@ Actualmente existe la vista **Catálogo > Configuración Rápida** (`/catalogo/c
 - [[Orden_Produccion]] — La configuración de molde/pieza impacta directamente en `snapshot_composicion_molde` al crear una OP.
 - [[Snapshot_Composicion_Molde]] — Las formas (MoldePieza) se congelan aquí al crear la OP.
 - [[Lote_Color]] — Cada lote de color de la OP referencia al `ColorProducto` de la Pieza.
+- [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD]] — Define el CRUD y la compatibilidad N:M de la clasificación usada por productos y piezas.
 
 ## Regla de Negocio Fundamental
 

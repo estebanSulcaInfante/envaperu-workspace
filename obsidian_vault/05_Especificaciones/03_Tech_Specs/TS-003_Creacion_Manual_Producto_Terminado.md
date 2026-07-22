@@ -4,9 +4,13 @@ estado: en-revision
 tags: [catalogo, backend, frontend, bom, productos]
 relaciones: 
   - "[[US-003_Creacion_Manual_Producto_Terminado]]"
+  - "[[TS-013_Codigos_Correlativos_Automaticos_Catalogo]]"
 ---
 
 # TS-003: Especificación Técnica - CRUD de Producto Terminado y BOM
+
+> [!IMPORTANT] Código automático
+> “Creación manual” describe la construcción interactiva del producto y su BOM, no la escritura del SKU. [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]] sustituye `cod_sku_pt` como entrada del alta: el backend asigna `PT-NNNNNN`, lo devuelve al confirmar y lo mantiene inmutable.
 
 ## 1. Objetivo Técnico
 Proveer una interfaz y los endpoints REST correspondientes para crear y modificar un `ProductoTerminado` y su BOM (Bill of Materials) expresado mediante registros en la tabla `producto_pieza` (relación 1:N que asocia el Producto a las `PiezaColor` y define sus cantidades).
@@ -24,7 +28,6 @@ Actualmente deben existir métodos pero requieren refactorizarse para soportar e
 **Payload de Creación/Actualización:**
 ```json
 {
-  "cod_sku_pt": "PT-001",
   "producto": "Balde 20L Completo",
   "linea_id": 1,
   "familia_id": 2,

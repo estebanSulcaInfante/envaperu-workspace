@@ -13,11 +13,24 @@ tags:
   - normalizacion
   - config-rapida
 fecha_creacion: 2026-06-27
+relaciones:
+  - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
+  - "[[TS-013_Codigos_Correlativos_Automaticos_Catalogo]]"
+  - "[[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD]]"
 ---
 
 # TS-001: Creación Ágil de Molde-Producto-Pieza
 
 > Especificación Técnica derivada de [[02_User_Stories/US-001_Creacion_Agil_Molde_Producto_Pieza|US-001]].
+
+> [!IMPORTANT] Corrección posterior
+> [[TS-012_Normalizacion_Relacion_Molde_Pieza_NM|TS-012]] sustituye la cardinalidad `Molde -> Pieza` 1:N y la ubicación de `molde_id`, `cavidades` y el peso operativo en `Pieza`. El modelo vigente usa `Pieza` global y `MoldePieza` como asociación N:M; el resto de esta especificación conserva valor histórico y funcional.
+
+> [!IMPORTANT] Generación de identificadores sustituida
+> [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]] sustituye D3, las fórmulas derivadas de nombres/colores y cualquier preview de un SKU definitivo. Las altas ordinarias omiten el código; el backend asigna correlativos `ML`, `PZ`, `PC` y `PT`. La UI puede previsualizar cuántas entidades se crearán, pero muestra sus identificadores solo después de guardar.
+
+> [!IMPORTANT] Clasificación Línea-Familia sustituida
+> [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD|TS-014]] sustituye D2 y cualquier mapeo exclusivo del frontend. `Linea` y `Familia` tienen CRUD lógico/versionado y se relacionan N:M mediante `LineaFamilia`; todo producto, pieza o variante clasificada debe usar un par activo.
 
 ---
 
@@ -282,7 +295,7 @@ sku_pieza = f"{base_sku}-{forma.nombre.upper().replace(' ', '-')[:10]}-C{color.c
 
 **Archivo:** [rutas_catalogo.py](file:///c:/Users/esteb/gitprojects/envaperu-workspace-2/backend/app/api/rutas_catalogo.py)
 
-**Descripción:** Devuelve todas las familias de producto. Acepta filtro opcional por línea.
+**Descripción:** Devuelve las familias activas de producto. Acepta filtro opcional por Línea y lo resuelve mediante las asociaciones N:M activas de `LineaFamilia`.
 
 **Request:**
 
@@ -293,13 +306,13 @@ sku_pieza = f"{base_sku}-{forma.nombre.upper().replace(' ', '-')[:10]}-C{color.c
 **Response (200):**
 ```json
 [
-  { "id": 1, "codigo": 14, "nombre": "PLAYEROS", "linea_id": 2 },
-  { "id": 2, "codigo": 10, "nombre": "JARRAS", "linea_id": 1 }
+  { "id": 1, "codigo": 14, "nombre": "PLAYEROS", "activo": true, "version": 2 },
+  { "id": 2, "codigo": 10, "nombre": "JARRAS", "activo": true, "version": 1 }
 ]
 ```
 
-> [!NOTE]
-> Las entidades `Familia` y `Linea` son independientes en el dominio. El filtrado de familias por línea en el frontend se seguirá manejando mediante un mapeo de reglas de negocio en la aplicación (o atributos extendidos en el frontend), sin requerir una FK en la tabla `familia` de la BD.
+> [!IMPORTANT] Contrato corregido
+> Una Familia no contiene una FK singular `linea_id`: puede pertenecer a varias Líneas. El filtro y la validación autoritativos recorren `Linea -> LineaFamilia -> Familia`, conforme a [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD|TS-014]].
 
 **Entidades Involucradas:** [[Familia]], [[Linea]]
 
@@ -414,12 +427,12 @@ Paso 4: Revisión y Envío
 
 ```
 ┌──────────────────┬────────┬──────────────────────────────────┐
-│ Forma (Pieza)    │ Color  │ SKU Generado (preview)           │
+│ Forma (Pieza)    │ Color  │ Código                           │
 ├──────────────────┼────────┼──────────────────────────────────┤
-│ Tapa Regadera    │ Rojo   │ REGADERA-F1-C5                   │
-│ Base Regadera    │ Rojo   │ REGADERA-F2-C5                   │
-│ Tapa Regadera    │ Azul   │ REGADERA-F1-C8                   │
-│ Base Regadera    │ Azul   │ REGADERA-F2-C8                   │
+│ Tapa Regadera    │ Rojo   │ Se asignará al guardar           │
+│ Base Regadera    │ Rojo   │ Se asignará al guardar           │
+│ Tapa Regadera    │ Azul   │ Se asignará al guardar           │
+│ Base Regadera    │ Azul   │ Se asignará al guardar           │
 └──────────────────┴────────┴──────────────────────────────────┘
 Total: 2 formas × 2 colores = 4 SKUs coloreados
 ```
@@ -572,8 +585,8 @@ alembic upgrade head
 
 > [!NOTE]
 > **D2: Independencia de Línea y Familia**
-> Las tablas `linea` y `familia` se mantendrán **completamente independientes**. No se agregará una `linea_id` FK a `familia`. Cualquier lógica de asociación se manejará a nivel de lógica de aplicación o frontend.
+> **Decisión sustituida por [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD|TS-014]].** Los maestros conservan identidades propias, pero su compatibilidad se modela N:M en `linea_familia`; no se usa una FK singular en `familia` ni un mapeo hardcodeado en frontend.
 
 > [!NOTE]
 > **D3: Generación de SKUs**
-> Se conservará la **fórmula actual de concatenación** (Ej: truncamientos, sufijos de color) en lugar de hashes o IDs numéricos. Para solucionar el problema de fragilidad, se enfocarán los esfuerzos en asegurar la integridad de los datos de entrada (asegurar nombres únicos por forma en el molde) para que la fórmula determinista no genere colisiones.
+> **Decisión sustituida por [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]].** Los códigos nuevos son correlativos inmutables generados por el backend y no concatenan atributos del catálogo.

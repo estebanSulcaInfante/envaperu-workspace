@@ -4,9 +4,16 @@ estado: en-revision
 tags: [catalogo, backend, frontend, arquitectura, crud]
 relaciones: 
   - "[[US-002_Refactor_CRUD_Molde_Pieza_Producto]]"
+  - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
+  - "[[TS-013_Codigos_Correlativos_Automaticos_Catalogo]]"
 ---
 
 # TS-002: Especificación Técnica para Refactor de CRUD de Molde, Pieza y Producto
+
+> [!IMPORTANT] Corrección posterior
+> [[TS-012_Normalizacion_Relacion_Molde_Pieza_NM|TS-012]] sustituye la definición de `Pieza` como hija directa de un único molde. El CRUD vigente separa el maestro global `Pieza` de la composición `MoldePieza`, donde se editan cavidades y peso operativo.
+>
+> [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]] sustituye el generador basado en línea, familia, nombre, molde o color. El CRUD no recibe códigos manuales: el backend asigna correlativos `ML`, `PZ`, `PC` y `PT` y los formularios los muestran como solo lectura.
 
 ## 1. Objetivo Técnico
 Refactorizar los endpoints REST y los componentes React del catálogo maestro de productos/moldes para soportar la arquitectura de dominio actualizada en TS-001 (separación estricta entre Forma=`Pieza` y Variante Física=`PiezaColor`). Se debe garantizar que las modificaciones respeten las reglas de generación de SKUs y manejen integridades referenciales seguras.
@@ -61,7 +68,7 @@ Todos los endpoints usarán prefijo `/api/catalogo`.
 *   **Payload:** `{ color_id }`
 *   **Lógica:** 
     1. Resuelve la línea y familia a través del Molde de la Forma.
-    2. Aplica la función del dominio `generar_sku_pieza(linea, familia, nombre, color)`.
+    2. Solicita el siguiente correlativo `PC` mediante el servicio definido en [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]].
     3. Persiste el nuevo registro `PiezaColor`. Retorna error 409 si el color ya existe para esa forma.
 
 ### 3.6. `DELETE /formas/<forma_id>`
@@ -80,6 +87,6 @@ Todos los endpoints usarán prefijo `/api/catalogo`.
 
 ## 5. Implementación (Plan de Ejecución)
 1.  **Migración / Controladores Backend:** Crear las nuevas rutas en `rutas_catalogo.py` con sus respectivas protecciones try-except.
-2.  **Lógica de SKU:** Refactorizar la función que genera SKUs para que sea agnóstica de la ruta de creación (sea el wizard o el CRUD individual).
+2.  **Lógica de SKU:** Centralizar la asignación correlativa del backend para que wizard y CRUD individual compartan [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]].
 3.  **Frontend Views:** Construir el esqueleto Master-Detail (`MoldeDetalle.jsx`).
 4.  **Integración:** Conectar el componente Acordeón con los endpoints `POST /formas/...`.
