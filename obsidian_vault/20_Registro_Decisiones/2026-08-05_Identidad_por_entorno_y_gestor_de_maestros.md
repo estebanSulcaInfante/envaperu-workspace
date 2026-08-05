@@ -31,4 +31,10 @@ No recibe capacidades de:
 
 `VITE_SCM_PROFILE_SWITCH_ENABLED=false` permite deshabilitar el selector también en desarrollo. Vite lo habilita por defecto sólo durante `npm run dev`; un build de producción no puede habilitarlo mediante esta variable.
 
-Ocultar el selector no reemplaza la autenticación. El despliegue definitivo debe validar la sesión de Supabase Auth en el backend antes de retirar el encabezado provisional `X-Actor-Id`.
+## Autenticación productiva
+
+- Supabase Auth autentica correo y contraseña y entrega una sesión renovable.
+- El backend valida el JWT firmado mediante el JWKS público de Supabase.
+- El `sub` del JWT se vincula de forma única con `trabajador.auth_user_id`.
+- En modo productivo se ignora `X-Actor-Id`: el actor auditable siempre procede de la sesión.
+- El cambio a `SCM_AUTH_MODE=supabase` se realiza únicamente después de crear y vincular al menos una cuenta administrativa, para evitar un bloqueo operativo.
