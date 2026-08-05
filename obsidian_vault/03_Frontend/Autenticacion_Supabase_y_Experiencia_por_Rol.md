@@ -25,7 +25,14 @@ La llave publicable puede estar en el bundle. Nunca se incorpora una llave secre
 ## Estados de acceso
 
 - Sin sesión: pantalla de inicio de sesión.
+- Invitación o recuperación válida: pantalla obligatoria para definir una contraseña personal de al menos 10 caracteres.
 - Sesión válida sin trabajador vinculado: acceso denegado y mensaje de vínculo pendiente.
 - Trabajador desactivado: acceso denegado inmediatamente.
 - Sesión y trabajador activos: experiencia calculada por capacidades.
 
+## Primer acceso
+
+1. Abrir la invitación remitida por Supabase al correo personal.
+2. Definir y confirmar una contraseña propia; no compartirla con Gerencia ni soporte.
+3. Comprobar que la barra superior muestre el participante esperado.
+4. Cerrar sesión al finalizar el trabajo en un equipo compartido.
