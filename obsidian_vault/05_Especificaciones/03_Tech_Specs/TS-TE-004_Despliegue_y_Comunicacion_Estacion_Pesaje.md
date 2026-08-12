@@ -10,15 +10,19 @@ relaciones:
   - "[[TE-003_Contratos_Central_Pesaje_y_E2E_Aislado]]"
   - "[[US-009_Normalizar_Trabajadores_Maquinas_y_Vistas_Catalogo]]"
   - "[[US-010_Trazabilidad_End_to_End_SCM]]"
+  - "[[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas]]"
+  - "[[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion]]"
+  - "[[US-010F_Prearmado_y_Armado_Concurrente_Trazable]]"
   - "[[2026-07-17_Autenticacion_Humana_Diferida_Hasta_Cierre_Funcional]]"
 fecha_creacion: 2026-07-16
+fecha_actualizacion: 2026-07-23
 ---
 
 # TS-TE-004: Despliegue y Comunicación de la Estación de Pesaje
 
 ## 1. Decisión Ejecutiva
 
-El módulo de pesaje se desplegará como una **estación edge Windows offline-first** y no como un frontend remoto ni como un servidor accesible desde la red.
+El módulo de pesaje se desplegará como una **estación edge Windows** y no como un frontend remoto ni como un servidor accesible desde la red. El perfil legacy conserva continuidad offline-first; el perfil SCM del piloto exige conexión central antes de aceptar un peso.
 
 El primer perfil conectado será `MONITORED_LEGACY`:
 
@@ -31,9 +35,9 @@ El primer perfil conectado será `MONITORED_LEGACY`:
 7. Central recibe heartbeat, resúmenes y continuidad legacy para US-011, sin controlar hardware.
 8. El envío antiguo `POST /api/sync/pesajes` permanece deshabilitado; `station-legacy-continuity-v1` replica datos del piloto sin crear `ControlPeso`.
 9. Las cantidades reportadas por heartbeat son informativas y nunca crean inventario.
-10. US-010D será la única responsable de habilitar el evento de pesaje idempotente, la unidad logística y el movimiento de inventario definitivos.
+10. US-010D habilitará el evento de pesaje idempotente y confirmará la manga, pero no creará inventario ni Kardex. El ingreso físico a almacén y el primer movimiento pertenecen a US-010I.
 
-La estación podrá operar completamente offline. La conexión central añade observabilidad y catálogos, no una dependencia para aceptar un peso.
+La estación podrá operar completamente offline únicamente en perfiles legacy. En `SCM_V2_CONNECTED`, la conexión central es una precondición para habilitar F2 y no se persiste una captura SCM offline.
 
 ## 2. Razón de la Decisión
 
@@ -199,7 +203,7 @@ flowchart LR
 | `STANDALONE_OFFLINE` | Desactivado | Ninguno | Contingencia o estación no provisionada. |
 | `MONITORED_LEGACY` | Heartbeat, historial incremental y comandos de datos | Réplica legacy sin inventario SCM | Perfil obligatorio del primer piloto conectado. |
 | `LEGACY_SYNC_COMPAT` | Contrato TE-003 | `legacy-v1` | Solo desarrollo, pruebas y transición autorizada; no release normal. |
-| `SCM_V2` | Integración completa | Evento idempotente US-010D | Perfil futuro. |
+| `SCM_V2_CONNECTED` | Integración completa y conexión obligatoria | Evento idempotente US-010D, sin Kardex | Perfil del piloto SCM. |
 
 El binario de release no aceptará `LEGACY_SYNC_COMPAT` sin una bandera explícita de soporte y un banner permanente. No será el valor por defecto.
 
@@ -507,7 +511,7 @@ Registro append-only de una solicitud local de corrección. No modifica el `Pesa
 | `source_classification` | Clasificación de trazabilidad del pesaje fuente. |
 | `status` | `PENDING_LOCAL_REVIEW` o `REQUIRES_CENTRAL_REVIEW`. |
 
-El outbox de eventos de inventario se implementará con US-010D. Heartbeat utiliza latest-value coalescido, no una cola histórica durable.
+El outbox de eventos de inventario no forma parte de US-010D. Heartbeat utiliza latest-value coalescido, no una cola histórica durable; US-010I definirá el ingreso a almacén y el nacimiento de Kardex.
 
 ## 12. Backup y Restauración
 
@@ -812,7 +816,7 @@ En `MONITORED_LEGACY`:
 - el monitor etiqueta `LOCAL_REPORTED_LEGACY`;
 - central no crea `ControlPeso` por heartbeat.
 
-Activar ingestión productiva requiere US-010D con, como mínimo, `station_id`, `source_event_id` UUID, unique constraint central, lote de salida, unidad logística y semántica de corrección.
+Activar ingestión productiva requiere US-010D con, como mínimo, `station_id`, `source_event_id` UUID, unique constraint central, manga planificada, lote de salida y semántica de corrección. El resultado permanece pendiente de recepción de almacén.
 
 ### 15.7. Talonarios y Orden de Trabajo
 
@@ -1251,7 +1255,7 @@ La comprobación “`ControlPeso` no creado” es una garantía central del pilo
 - lote de salida y `PiezaColor` exacta;
 - bruto, tara, neto y cantidad;
 - unidad logística y QR versionado;
-- correcciones y kardex;
+- correcciones y estado `PENDIENTE_RECEPCION_ALMACEN`, sin Kardex;
 - retiro de `legacy-v1`.
 
 ## 28. Componentes y Archivos Previstos

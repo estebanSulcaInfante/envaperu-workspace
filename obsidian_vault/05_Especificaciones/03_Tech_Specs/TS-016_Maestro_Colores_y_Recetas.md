@@ -4,15 +4,19 @@ estado: implementada
 tags: [catalogo, color, receta, frontend, backend, api]
 relaciones:
   - "[[../02_User_Stories/US-006_Normalizar_Composicion_Color_Familia|US-006]]"
+  - "[[TS-017B_Configuracion_Fisica_Formulaciones_y_UX_Premium]]"
 fecha_creacion: 2026-07-22
-fecha_actualizacion: 2026-07-23
+fecha_actualizacion: 2026-08-10
 ---
 
 # TS-016: Maestro de colores y recetas
 
+> [!NOTE] Lenguaje de alta guiada
+> TS-017B presenta este agregado como **Formulación de material** porque puede contener resina y aditivos aunque no exista pigmento. “Sin pigmento” es una fórmula válida con materias primas cuya fracción suma `1`; “sin formulación” continúa siendo un bloqueo para la OF.
+
 ## Objetivo
 
-Permitir que el usuario mantenga colores de producción y cree sus propias recetas reutilizables desde `/datos-maestros/colores`. La OP excepcional puede aplicar una receta aprobada, copiar sus componentes editables y conservar una referencia histórica explícita a la revisión usada.
+Permitir que el usuario mantenga colores de producción y cree sus propias recetas reutilizables desde `/datos-maestros/colores`. La OF excepcional puede aplicar una receta aprobada, copiar sus componentes editables y conservar una referencia histórica explícita a la revisión usada.
 
 ## Modelo
 
@@ -88,3 +92,4 @@ La pestaña **Datos maestros > Colores y recetas** permite:
 ## Pendiente transversal
 
 - Aplicar permisos por rol cuando se cierre el desarrollo transversal de autorización.
+- Separar en una evolución posterior pigmentación, apariencia óptica y acabado superficial. En el piloto, `FamiliaColor` conserva el contrato persistido y la UI evita equiparar transparente con blanco.

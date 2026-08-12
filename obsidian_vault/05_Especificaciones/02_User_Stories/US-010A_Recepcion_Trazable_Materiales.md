@@ -7,6 +7,7 @@ tags: [scm, trazabilidad, recepcion, proveedores, lotes, inventario, calidad, at
 relaciones:
   - "[[US-010_Trazabilidad_End_to_End_SCM]]"
   - "[[US-010B_Reserva_Emision_Materiales_OP]]"
+  - "[[US-010L_Material_Segunda_Reproceso_y_Mezcla_Preparada_Trazable]]"
   - "[[Vista_US-010A_Recepcion_Materiales]]"
   - "[[US-009_Normalizar_Trabajadores_Maquinas_y_Vistas_Catalogo]]"
   - "[[2026-07-13_Perfil_Trazabilidad_ISO9001_ISA95_GS1]]"
@@ -16,11 +17,19 @@ relaciones:
   - "[[DEV-010A_Recepcion_Trazable_Materiales]]"
   - "[[Composicion_Materiales]]"
   - "[[2026-07-17_Autenticacion_Humana_Diferida_Hasta_Cierre_Funcional]]"
+  - "[[2026-08-03_Alcance_Piloto_Apertura_Inicial_sin_Recepcion_Compras]]"
 fecha_creacion: 2026-07-13
-fecha_actualizacion: 2026-07-21
+fecha_actualizacion: 2026-08-08
 ---
 
 # US-010A: Recepción Trazable de Materiales
+
+> [!NOTE] Alcance del nuevo piloto — 2026-08-03
+> La recepción ordinaria de compras queda fuera del primer lanzamiento del
+> nuevo piloto. El stock de corte nace mediante `APERTURA_INICIAL` auditada y
+> no mediante recepciones, OC, guías o proveedores ficticios. Esta decisión no
+> cancela US-010A ni habilita aperturas para compras posteriores; difiere su
+> desarrollo completo hasta estabilizar el circuito productivo y de almacén.
 
 ## 1. Decisión de Alcance
 
@@ -177,7 +186,7 @@ Confirmarla significa aceptar custodia y crear inventario exactamente una vez. E
 
 ### 5.13. Catálogo interno de proveedores
 
-El sistema mantiene un proveedor con ID interno inmutable, código visible, razón social, identificador tributario cuando corresponda y estado activo. Una guía puede proponer datos para revisión, pero nunca crea o cambia silenciosamente la identidad maestra del proveedor.
+El sistema mantiene un proveedor con ID interno inmutable, código visible, razón social, identificador tributario cuando corresponda y estado activo. Puede conservar además persona de contacto, teléfono, WhatsApp y correo como datos maestros opcionales y editables. Una guía puede proponer datos para revisión, pero nunca crea o cambia silenciosamente la identidad maestra ni sus datos de contacto.
 
 ### 5.14. Modalidad y Autoridad de Cantidad Recibida
 

@@ -12,11 +12,15 @@ relaciones:
   - "[[Linea]]"
   - "[[Familia]]"
   - "[[LineaFamilia]]"
+  - "[[../../../20_Registro_Decisiones/2026-08-10_Autoridad_de_Clasificacion_Comercial_en_ProductoTerminado]]"
 fecha_creacion: 2026-07-22
-fecha_actualizacion: 2026-07-22
+fecha_actualizacion: 2026-08-10
 ---
 
 # TS-014: Normalización Línea-Familia N:M y CRUD de clasificación
+
+> [!IMPORTANT] Autoridad refinada el 2026-08-10
+> La relación N:M y la validación de cualquier par informado permanecen vigentes. La decisión [[../../../20_Registro_Decisiones/2026-08-10_Autoridad_de_Clasificacion_Comercial_en_ProductoTerminado|ProductoTerminado como autoridad comercial]] sustituye únicamente la propagación obligatoria hacia Pieza/PiezaColor: Pieza puede quedar sin clasificación técnica y PiezaColor no la necesita para existir.
 
 ## 1. Estado y autoridad de la decisión
 
@@ -135,7 +139,7 @@ La validación común debe ejecutarse dentro de la misma transacción que crea o
 
 ### 4.1. `ProductoTerminado`
 
-`linea_id` y `familia_id` son obligatorios. El par debe existir activo y sus dos maestros deben estar activos. La misma regla aplica al wizard de creación en cascada antes de crear cualquier Molde, Pieza, variante o producto.
+`linea_id` y `familia_id` son obligatorios. El par debe existir activo y sus dos maestros deben estar activos. La misma regla aplica a la fase de identidad del ProductoTerminado; no se propaga automáticamente a Molde, Pieza o variante.
 
 ### 4.2. `Pieza`
 
@@ -143,10 +147,10 @@ La clasificación puede permanecer vacía cuando la pieza legítimamente no est�
 
 ### 4.3. `PiezaColor`
 
-La clasificación canónica de una variante se deriva de su `Pieza`, conforme a [[US-007_Normalizar_ProductoTerminado_PiezaColor_Salidas_OP|US-007]]. En altas ordinarias:
+Las columnas de clasificación de una variante son compatibilidad legacy. En altas ordinarias:
 
-- si existe `pieza_id`, la variante usa el par de la Pieza y no acepta una combinación contradictoria;
-- mientras las columnas legacy `PiezaColor.linea_id` y `familia_id` sigan presentes, cualquier par persistido debe coincidir con la Pieza y ser una asociación activa;
+- si existe `pieza_id`, la variante puede crearse aunque la Pieza no tenga clasificación técnica;
+- mientras las columnas legacy `PiezaColor.linea_id` y `familia_id` sigan presentes, no se escriben como autoridad comercial; si un consumidor legacy exige conservar un par, éste debe coincidir con la clasificación técnica informada de Pieza;
 - una variante legacy todavía no vinculada a `Pieza` puede conservar su par actual, pero una modificación de clasificación debe proporcionar ambos IDs y usar una asociación activa.
 
 Esta compatibilidad no convierte `PiezaColor` en nueva fuente de verdad ni cancela la eliminación posterior de la duplicación prevista por US-007.
@@ -192,10 +196,12 @@ Todas las listas funcionales excluyen inactivos por defecto. Las pantallas admin
 | Método | Ruta | Resultado |
 | :--- | :--- | :--- |
 | `GET` | `/api/catalogo/lineas/{linea_id}/familias` | Familias asociadas; activas por defecto. |
-| `POST` | `/api/catalogo/lineas/{linea_id}/familias` | Crea o reactiva el par recibido como `familia_id`. |
+| `POST` | `/api/catalogo/lineas/{linea_id}/familias` | Con `familia_id`, crea o reactiva el par; con el objeto `familia`, crea Familia y `LineaFamilia` atómicamente. |
 | `DELETE` | `/api/catalogo/lineas/{linea_id}/familias/{familia_id}` | Desasocia lógicamente y bloquea si hay referencias. |
 
-Una asociación ya activa no genera duplicados. `POST` opera sobre la fila inactiva cuando debe reactivarla. El servidor incrementa `LineaFamilia.version` en cada cambio; el cliente no la envía como precondición en este incremento. La respuesta de asociación incluye `id`, ambos IDs, `activo` y `version` como evidencia del estado confirmado.
+Una asociación ya activa no genera duplicados. `POST` opera sobre la fila inactiva cuando debe reactivarla. El servidor incrementa `LineaFamilia.version` en cada cambio; el cliente no la envía como precondición en este incremento. La respuesta de asociación incluye `id`, ambos IDs, `activo`, `version` y los catálogos relacionados como evidencia del estado confirmado.
+
+El payload acepta exactamente una alternativa: `{ "familia_id": 7 }` o `{ "familia": { "codigo": 14, "nombre": "BALDES" } }`. En la segunda forma, Familia y asociación se confirman o revierten dentro de la misma transacción. Un formulario contextual dependiente de una Línea —incluido el alta guiada de PT— no puede usar primero `POST /api/catalogo/familias`, porque un éxito global sin `LineaFamilia` no deja un valor seleccionable para ese contexto.
 
 Ejemplo de Familia serializada dentro de una Línea:
 

@@ -8,18 +8,43 @@ relaciones:
   - "[[US-008_Normalizacion_ColorProduccion]]"
   - "[[US-009_Normalizar_Trabajadores_Maquinas_y_Vistas_Catalogo]]"
   - "[[US-010A_Recepcion_Trazable_Materiales]]"
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
   - "[[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]]"
   - "[[US-010B_Reserva_Emision_Materiales_OP]]"
+  - "[[US-010L_Material_Segunda_Reproceso_y_Mezcla_Preparada_Trazable]]"
+  - "[[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas]]"
+  - "[[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion]]"
+  - "[[US-010I_Ingreso_Almacen_Mangas_y_Nacimiento_Kardex]]"
+  - "[[US-010F_Prearmado_y_Armado_Concurrente_Trazable]]"
+  - "[[US-010H_Abastecimiento_Interno_Picking_QR_y_Consumo_Mangas]]"
   - "[[US-011_Monitorear_Estaciones_de_Pesaje]]"
   - "[[TE-004_Despliegue_Operativo_y_Observabilidad_Estacion_Pesaje]]"
   - "[[SCM_Frontend_Overview_US-010]]"
   - "[[2026-07-13_Perfil_Trazabilidad_ISO9001_ISA95_GS1]]"
   - "[[Orden_Produccion]]"
+  - "[[Orden_Fabricacion]]"
   - "[[Lote_Color]]"
   - "[[Registro_Diario]]"
   - "[[Control_Peso]]"
+  - "[[Saldo_WIP_Salida]]"
+  - "[[2026-08-03_Alcance_Piloto_Apertura_Inicial_sin_Recepcion_Compras]]"
+  - "[[Alcance_Nuevo_Piloto_SCM_2026-08]]"
+  - "[[Articulo_SCM]]"
+  - "[[Ruta_Produccion]]"
+  - "[[Lote_WIP]]"
+  - "[[Lote_Producto_Terminado]]"
+  - "[[Perfil_Empaque]]"
+  - "[[Tipo_Manga]]"
+  - "[[Etiqueta_Manga]]"
+  - "[[Orden_Armado]]"
+  - "[[2026-07-23_Separacion_Peso_Fisico_Produccion_y_Armado]]"
+  - "[[2026-07-24_Prearmado_Parcial_como_WIP_y_Empaque_Normalizado]]"
+  - "[[2026-07-24_Mangas_Etiquetas_Fecha_Operativa_y_Recepcion_Almacen]]"
+  - "[[2026-07-29_Separacion_OP_OF_OA_OT_y_Cobertura_NM]]"
+  - "[[2026-07-30_Cierre_Armado_Pesaje_PT_Recepcion_y_Calidad]]"
+  - "[[2026-07-30_OT_Diaria_Comun_para_Fabricacion_y_Armado]]"
 fecha_creacion: 2026-07-12
-fecha_actualizacion: 2026-07-21
+fecha_actualizacion: 2026-08-08
 ---
 
 # US-010: Trazabilidad End-to-End del Flujo SCM
@@ -34,7 +59,7 @@ Sin embargo, todavía no existe trazabilidad SCM end-to-end. El sistema no puede
 
 Tampoco puede responder la consulta inversa:
 
-> Si un lote de materia prima resulta no conforme, ¿qué OP, piezas, bultos, productos terminados, ubicaciones y despachos fueron afectados?
+> Si un lote de materia prima resulta no conforme, ¿qué OF/OT, piezas, bultos, OP de demanda, productos terminados, ubicaciones y despachos fueron afectados?
 
 La clasificación honesta del sistema, asumiendo US-008 y US-009 implementadas, es:
 
@@ -74,7 +99,7 @@ La implementación debe preparar evidencia para los siguientes temas de la norma
 |---|---|
 | 7.5 Información documentada | Registros íntegros, versionados, legibles y recuperables |
 | 8.4 Control de suministros externos | Proveedor, recepción, lote de proveedor, inspección y liberación |
-| 8.5.1 Producción controlada | OP, recursos, fórmula, parámetros, ejecución y resultados |
+| 8.5.1 Producción controlada | OP de demanda, OF/OA, OT, recursos, fórmula, parámetros, ejecución y resultados |
 | 8.5.2 Identificación y trazabilidad | IDs únicos, estado y genealogía de materiales y salidas |
 | 8.5.4 Preservación | Ubicación, almacenamiento, manipulación y movimiento |
 | 8.5.6 Control de cambios | Revisiones, snapshots y eventos de corrección |
@@ -97,12 +122,13 @@ Mapeo conceptual:
 
 | ISA-95 | Dominio EnvaPerú |
 |---|---|
-| Material definition | `MateriaPrima`, `Colorante`, `PiezaColor`, `ProductoTerminado` |
-| Material lot / sublot | `LoteMaterial`, `LoteProduccion`, `LoteSalida`, `LoteProductoTerminado` |
+| Material definition | `MateriaPrima`, `Colorante` y `ArticuloSCM` (`PiezaColor`, WIP WIP o `ProductoTerminado`) |
+| Material lot / sublot | `LoteMaterial`, `LoteProduccion`, `LoteSalida`, [[Lote_WIP]] y [[Lote_Producto_Terminado]] |
 | Equipment resource | `Maquina`, `Molde`, balanza |
 | Personnel resource | `Trabajador`, `RolOperativo` |
-| Production request | `OrdenProduccion` y sus lotes planificados |
-| Production response/performance | RDP, detalle horario, consumos, salidas y pesajes reales |
+| Production request | `OrdenProduccion` y sus líneas de `ProductoTerminado` |
+| Work/production order | `OrdenFabricacion` y `OrdenArmado` |
+| Production response/performance | OT/RDP, detalle horario, consumos, salidas y pesajes reales |
 | Operations event | `EventoTrazabilidad` |
 
 La integración futura con un ERP debe realizarse mediante contratos y eventos; no mediante acceso directo a tablas del MES.
@@ -147,10 +173,10 @@ EnvaPerú puede iniciar con IDs internos globalmente únicos. No debe generar id
 |---|---|---|---|
 | Datos maestros | Además de moldes, piezas, colores, máquinas y trabajadores, US-010A ya incorporó proveedor, categoría de recepción e identidad común de material | Parcial | Faltan clientes, ubicaciones y unidades de medida más allá de `KG` |
 | Compras de material | Proveedor y OC internas versionadas con edición de borrador, aprobación segregada y auditoría | Parcial | Faltan documentos externos, imputaciones de recepción, rechazo/cierre y saldo recibido real |
-| Planificación | OP, snapshot de molde, lotes por color, recetas y metas | Fuerte | El lote no tiene identidad, secuencia, revisión ni estado suficientemente controlados |
+| Planificación | Mock de demanda PT y entidad técnica legacy con snapshot de molde, colores y metas | Parcial | Falta persistir la nueva OP de demanda y migrar la orden técnica a OF/corridas |
 | Ejecución horaria | RDP, máquina, trabajador, coladas y parámetros | Parcial | El detalle usa color texto y no identifica siempre el lote ejecutado ni cada salida física |
 | Materiales | `MateriaPrima` y `Colorante` poseen identidad común `scm_material` 1:1 obligatoria y categoría configurable | Parcial | No existen todavía lotes recibidos, saldos físicos ni consumos reales |
-| Salidas de producción | `PiezaColor` y `LoteSalidaPiezaColor` creados para OP nuevas | Parcial | Falta enlazar ejecución, pesajes, bultos e inventario y poblar cantidades reales |
+| Salidas de producción | `PiezaColor` y `LoteSalidaPiezaColor` creados para órdenes técnicas legacy/OF nuevas | Parcial | Falta completar el vínculo OF/corrida/OT, pesajes, bultos e inventario |
 | Pesaje | Pesaje offline y `ControlPeso` central | Parcial | No hay FK central a la salida, tara, cantidad, UUID global ni idempotencia completa |
 | Inventario | `InventarioManga` y `MovimientoKardex` append-only | Parcial | Bulto identificado por ID local, ubicaciones texto y contenido cacheado sin genealogía |
 | Calidad | Peso como verificación | Ausente como sistema | No hay inspección, cuarentena, liberación, bloqueo ni disposición no conforme |
@@ -158,7 +184,7 @@ EnvaPerú puede iniciar con IDs internos globalmente únicos. No debe generar id
 | Armado | Operación `SAL-ARMAR` en kardex | Ausente como transformación | Consume el bulto completo sin crear lote de producto ni registrar componentes usados |
 | Despacho | Estado `DESPACHADO` y locación `CLIENTE_FINAL` | Débil | No existen cliente, documento, líneas, cantidades, receptor ni unidad logística de envío |
 | Auditoría | Historial legacy más `scm_evento` append-only y `scm_operacion` idempotente para el corte de compras | Parcial | Falta extender el envelope a recepción, inventario, correcciones y el resto de la cadena |
-| Consulta de genealogía | Consultas por OP y manga | Ausente | No existe recorrido backward/forward ni simulación de retiro |
+| Consulta de genealogía | Consultas legacy por código OP técnico y manga | Ausente | Falta recorrido OP-demanda → asignaciones → OF/OA/OT y backward/forward |
 
 ## 6. Lagunas Lógicas Verificadas en el Código Actual
 
@@ -184,10 +210,10 @@ US-010A ya enlaza cada fila legacy 1:1 con `scm_material`, código estable y cat
 
 ### 6.3. LoteColor es una corrida planificada, no un lote trazable completo
 
-`LoteColor` posee OP, `ColorProduccion` y meta, pero no dispone de:
+`LoteColor` posee la orden técnica legacy, `ColorProduccion` y meta, pero no dispone de:
 
 - código de lote estable;
-- secuencia dentro de la OP;
+- secuencia gobernada dentro de la futura OF;
 - estado de ejecución;
 - fecha real de inicio y fin;
 - revisión de fórmula;
@@ -196,9 +222,12 @@ US-010A ya enlaza cada fila legacy 1:1 con `scm_material`, código estable y cat
 
 Se recomienda evolucionar conceptualmente `LoteColor` a `LoteProduccion`. El nombre físico de la tabla puede conservarse temporalmente durante la migración.
 
-### 6.4. LoteSalidaPiezaColor implementado como objetivo de OP
+### 6.4. LoteSalidaPiezaColor implementado como objetivo técnico legacy/OF
 
-Desde la revisión `b7e9f1a4d510`, una OP nueva crea transaccionalmente una salida por cada combinación lote–pieza del snapshot. La salida referencia el `PiezaColor` exacto y congela cavidades, peso unitario, cantidad objetivo y kg netos objetivo.
+Desde la revisión `b7e9f1a4d510`, una orden técnica legacy crea transaccionalmente
+una salida por cada combinación lote–pieza del snapshot. La adaptación OP/OF la
+preserva como salida de `CorridaFabricacion`; referencia el `PiezaColor` exacto
+y congela cavidades, peso unitario, cantidad objetivo y kg netos objetivo.
 
 La brecha restante ya no es la identidad de la salida: los pesajes y el kardex aún deben referenciarla, y la ejecución debe completar cantidades buenas, rechazadas y kg reales.
 
@@ -213,6 +242,11 @@ El modelo central se vincula al RDP y opcionalmente al color, pero no al bulto n
 - balanza utilizada;
 - origen offline globalmente único;
 - estado de verificación.
+- contenido simple, WIP WIP o producto terminado;
+- peso físico total frente a kg atribuibles a la OT actual;
+- componentes previos consumidos durante prearmado.
+
+El porcentaje legacy “descuento ajeno a la pieza” puede modificar un peso numérico, pero no demuestra cantidad, lote de origen ni ejecución de armado. No debe migrarse como genealogía.
 
 ### 6.6. La sincronización offline no es idempotente de extremo a extremo
 
@@ -228,7 +262,9 @@ El QR debe identificar una entidad estable y versionada, no convertirse en la ba
 
 ### 6.8. InventarioManga mezcla identidad, snapshot y stock
 
-`InventarioManga` utiliza `pesaje_id` como identidad, almacena OP, molde, color, peso y pieza como textos cacheados, y usa `locacion_actual` como string.
+`InventarioManga` utiliza `pesaje_id` como identidad, almacena el código OP
+técnico legacy —futura OF—, molde, color, peso y pieza como textos cacheados, y
+usa `locacion_actual` como string.
 
 Debe evolucionar a una `UnidadLogistica` identificada globalmente y vinculada a una salida o lote. Su estado y ubicación actuales serán una proyección del historial, no la única evidencia.
 
@@ -248,7 +284,7 @@ Un objeto puede estar físicamente en una ubicación de cuarentena y tener estad
 
 La operación marca una manga como consumida, pero no registra:
 
-- orden de ensamble;
+- orden de armado;
 - cantidades parciales consumidas;
 - lotes de componentes;
 - versión o snapshot de BOM;
@@ -305,6 +341,23 @@ No hay una consulta que, partiendo de un lote de entrada o no conformidad, deter
 19. Los colorantes se dosifican sobre los kg de material virgen declarados por la receta, no sobre material de segunda, mezcla total ni `meta_kg`.
 20. La premezcla junta materias primas, colorante y aditivos aplicables; produce un WIP identificable a la salida de la tolva antes de la transformación por inyección o soplado.
 21. `CONJUNTO_CANDIDATOS` nunca se presenta como genealogía exacta. Toda consulta de impacto incluye a todos sus orígenes plausibles y no inventa porcentajes.
+22. Las piezas buenas sueltas se acreditan a un `SaldoWIPSalida` y se debitan una sola vez por embalaje directo o consumo en línea.
+23. El avance provisional de una operación de prearmado o armado no crea inventario ni consume componentes; la confirmación de manga consume/acredita producción, pero todavía no crea stock para la manga resultante.
+24. Una manga transformada se confirma mediante un único comando idempotente y transaccional; no se encadenan pesaje, consumo y acreditación como operaciones finales independientes.
+25. El cierre de una OT espera sus mangas directas y cualquier `CREDITO_EN_LINEA_PENDIENTE`; una vez acreditados sus cuerpos y conciliado el WIP, no invalida una `OrdenOperacion` que solo la referencia como contexto.
+26. Toda manga que debita WIP posee cantidad asignada centralmente y confirmada implícitamente al pesar; nunca se infiere desde kg.
+27. Genealogía candidata/legacy degrada conocimiento de origen, no la existencia: siempre debita un pool o apertura contada y jamás permite saldo negativo.
+28. La idempotencia es obligatoria incluso en el piloto conectado; el transporte offline queda como incremento posterior.
+29. Planificación, pesaje, recepción de Almacén, ubicación, estado de inventario y Calidad son ejes distintos.
+30. La OP congela la base de planificación; cada OF/OA congela estructura, ruta
+    y configuración ejecutable; cada plan de manga congela por separado la
+    regla de empaque exacta. Cambiar un maestro no reescribe ejecuciones.
+31. Cada `OperacionRuta` declara una única autoridad.
+    `ORDEN_FABRICACION` puede acreditar `PiezaColor`, WIP o producto terminado
+    según su salida congelada; `ORDEN_ENSAMBLE` ejecuta transformaciones sin
+    crear una autoridad paralela.
+32. Pesar una manga no crea stock ni Kardex; el movimiento inicial nace con el escaneo de recepción de Almacén.
+33. `OT.fecha_operativa`, `OT.created_at` y `Manga.pesada_at` son tiempos distintos; el avance se atribuye siempre a la fecha operativa.
 
 ## 8. Modelo de Dominio Objetivo
 
@@ -329,13 +382,33 @@ erDiagram
     LOTE_PRODUCCION ||--o{ CONSUMO_LOTE_MATERIAL : confirma
     LOTE_PRODUCCION ||--|{ LOTE_SALIDA_PIEZA_COLOR : produce
     PIEZA_COLOR ||--o{ LOTE_SALIDA_PIEZA_COLOR : identifica
+    LOTE_SALIDA_PIEZA_COLOR ||--|| SALDO_WIP_SALIDA : proyecta
+    SALDO_WIP_SALIDA ||--o{ RESERVA_WIP_SALIDA : asigna
+    RESERVA_WIP_SALIDA }o--|| UNIDAD_LOGISTICA : destina
     LOTE_SALIDA_PIEZA_COLOR ||--o{ UNIDAD_LOGISTICA : embala
 
-    ORDEN_ENSAMBLE ||--o{ CONSUMO_COMPONENTE : consume
-    LOTE_SALIDA_PIEZA_COLOR ||--o{ CONSUMO_COMPONENTE : aporta
-    ORDEN_ENSAMBLE ||--|{ LOTE_PRODUCTO_TERMINADO : produce
+    ORDEN_OPERACION ||--o{ CONFIRMACION_BOLSA_OPERACION : ejecuta
+    CONFIRMACION_BOLSA_OPERACION ||--o{ CONSUMO_COMPONENTE : incorpora
+    CONSUMO_COMPONENTE ||--o{ ASIGNACION_ORIGEN_EXACTA : distribuye
+    CONSUMO_COMPONENTE ||--o| GRUPO_ORIGEN_CANDIDATO : usa_pool
+    GRUPO_ORIGEN_CANDIDATO ||--|{ ORIGEN_CANDIDATO : relaciona
+    SALDO_WIP_SALIDA ||--o{ ASIGNACION_ORIGEN_EXACTA : aporta_en_linea
+    ARTICULO_SCM ||--o{ REVISION_ESTRUCTURA_ARTICULO : versiona
+    REVISION_ESTRUCTURA_ARTICULO ||--|{ COMPONENTE_ESTRUCTURA_ARTICULO : contiene
+    ARTICULO_SCM ||--o{ COMPONENTE_ESTRUCTURA_ARTICULO : participa
+    PRODUCTO_TERMINADO ||--o{ REVISION_RUTA_PRODUCTO : organiza
+    REVISION_RUTA_PRODUCTO ||--|{ OPERACION_RUTA : secuencia
+    ORDEN_OPERACION ||--o{ LOTE_WIP : produce_intermedio
+    ORDEN_OPERACION ||--o{ LOTE_PRODUCTO_TERMINADO : produce_final
+    CONFIRMACION_BOLSA_OPERACION }o--o| LOTE_WIP : acredita_wip
+    CONFIRMACION_BOLSA_OPERACION }o--o| LOTE_PRODUCTO_TERMINADO : acredita_pt
+    ARTICULO_SCM ||--o{ LOTE_WIP : define
     PRODUCTO_TERMINADO ||--o{ LOTE_PRODUCTO_TERMINADO : define
+    LOTE_WIP ||--o{ UNIDAD_LOGISTICA : embala
     LOTE_PRODUCTO_TERMINADO ||--o{ UNIDAD_LOGISTICA : embala
+    TIPO_CONTENEDOR ||--o{ REGLA_EMPAQUE_REVISION : limita
+    PERFIL_EMPACABLE ||--o{ REGLA_EMPAQUE_REVISION : configura
+    REGLA_EMPAQUE_REVISION ||--o{ UNIDAD_LOGISTICA : congela_plan
 
     UNIDAD_LOGISTICA ||--o{ MOVIMIENTO_INVENTARIO : mueve
     DESPACHO ||--|{ DESPACHO_DETALLE : contiene
@@ -350,14 +423,20 @@ erDiagram
 
 - `Proveedor`.
 - `Cliente`.
-- `Ubicacion` con jerarquía planta/ámbito/almacén/zona/rack-silo/posición y propósito compatible: materia prima, `PiezaColor` o producto terminado.
+- `Ubicacion` con jerarquía planta/ámbito/almacén/zona/rack-silo/posición y propósito compatible: materia prima, `PiezaColor`, WIP o producto terminado.
 - `UnidadMedida` y reglas de conversión aprobadas.
 - `PoliticaToleranciaRecepcion` por categoría de material y modalidad, con límites, vigencia y autorizadores.
-- `TipoUnidadLogistica`: BOLSA, JABA, BULTO, CAJA, PALLET.
+- `TipoContenedor`: BOLSA, JABA, BULTO, CAJA, PALLET u otro soporte físico gobernado.
+- `ArticuloSCM` como identidad común de `PiezaColor`, WIP WIP y `ProductoTerminado`, con subtipos 1:1.
+- `RevisionEstructuraArticulo` para BOM multinivel acíclica y aprobada.
+- `RevisionRutaProducto` y `OperacionRuta` para precedencias, entradas, salidas,
+  `executor_kind=ORDEN_FABRICACION | ORDEN_ENSAMBLE` y ejecución concurrente.
+- `PerfilEmpacable` y `ReglaEmpaqueRevision`; la capacidad física no se guarda directamente en `PiezaColor`.
 - `MotivoMovimiento`.
 - `MotivoNoConformidad`.
 - `DisposicionCalidad`.
 - `Balanza` como equipo identificado y, cuando aplique, con estado de calibración.
+- Gobierno de aprobación, vigencia y hash para cada revisión de estructura, ruta y empaque.
 
 Si un ERP será dueño de proveedor, cliente, compra o venta, el MES almacenará el ID externo, namespace, versión y snapshot necesarios para trazabilidad.
 
@@ -399,7 +478,7 @@ La cantidad disponible es una proyección derivada de existencia, Calidad, reten
 
 Evolución de `LoteColor`:
 
-- código único y secuencia en la OP;
+- código único y secuencia en la OF/corrida;
 - `color_produccion_id`;
 - fórmula y revisión snapshot;
 - meta planificada;
@@ -439,23 +518,31 @@ Implementa la entidad definida en US-007, actualizada a `ColorProduccion`:
 - estado de calidad;
 - código de lote de salida.
 
+Cada salida mantiene además un [[Saldo_WIP_Salida|SaldoWIPSalida]] derivado de movimientos firmados: acredita unidades buenas/reingresos y debita embalaje directo, consumo en línea o bajas. Los ciclos solo generan expectativa; no acreditan unidades reales. Este saldo permite que una pieza pase directamente a armado sin una unidad logística ficticia y nunca puede ser negativo. Si el conteo bueno se confirma al cerrar la bolsa armada, la acreditación y el débito ocurren dentro del mismo comando.
+
+`ReservaWIPSalida` asigna cantidad a una manga/armado antes de pesar. `SALDO_EXISTENTE` reduce disponibilidad para asignar; `CREDITO_EN_LINEA_PENDIENTE` autoriza un crédito futuro y bloquea el cierre de la OT. Vencer conduce a conciliación, no a liberación automática.
+
 ### 8.7. UnidadLogistica
 
 Generaliza `InventarioManga`:
 
 - `id` UUID/ULID interno;
 - tipo de unidad;
-- contenido: lote de salida, lote material o lote de producto terminado;
+- contenido tipado: lote material, lote de salida, lote WIP o lote de producto terminado;
 - SKU/definición derivada;
-- cantidad de unidades;
+- cantidades planificada, asignada, confirmada y contenida, con fuente explícita;
 - peso bruto, tara y neto;
-- ubicación actual proyectada;
-- estado logístico proyectado;
+- ubicación de inventario nula hasta recepción;
+- estado de manga y estado de inventario como ejes distintos;
 - estado de calidad proyectado;
 - unidad padre opcional para caja/pallet;
-- etiqueta y versión de payload.
+- relación 1:N con etiquetas identificadas y versionadas.
 
 Una unidad contiene un solo lote y SKU, salvo una agregación explícita que registre cada hijo.
+
+El tipo físico de manga se gobierna mediante [[Tipo_Manga]]/`TipoContenedor`; no codifica el estado comercial del contenido. `content_lot_type` distingue `LOTE_SALIDA_PIEZA_COLOR`, `LOTE_WIP` y `LOTE_PRODUCTO_TERMINADO`. Los componentes se consultan por la genealogía de la `OrdenOperacion`, sin convertir automáticamente un prearmado parcial en producto terminado.
+
+El primer corte operativo C/D/F se limita a mangas con `qr_object_type=SCM_MANGA`. Cada impresión posee además `SCM_MANGA_LABEL`, `label_id` y versión. `tipo_contenedor_id`, `content_lot_type` y el modo UI son clasificadores distintos. Una manga pesada sigue `NO_INGRESADA` hasta US-010I.
 
 ### 8.8. MovimientoInventario
 
@@ -482,7 +569,9 @@ Se separan:
 
 El estado se asigna por cantidad y ubicación dentro del lote. Por ello, la existencia física actual debe coincidir con la suma de sus cantidades pendientes, liberadas, bloqueadas y rechazadas. Una decisión parcial conserva identidad y genealogía.
 
-**Estado logístico:** DISPONIBLE, RESERVADO, EN_TRANSITO, CONSUMIDO, DESPACHADO, DESTRUIDO.
+**Estado de manga previo a inventario:** BORRADOR, PLANIFICADA, PREETIQUETADA, PESADA, ETIQUETADA_FINAL, PENDIENTE_RECEPCION_ALMACEN, ANULADA, CONCILIACION.
+
+**Estado logístico posterior a recepción:** EN_STAGING, DISPONIBLE, RESERVADO, EN_TRANSITO, CONSUMIDO, DESPACHADO, DESTRUIDO.
 
 `DISPONIBLE` es una proyección y no una fuente de verdad independiente: exige cantidad físicamente existente, estado `LIBERADO`, ausencia de retenciones y saldo no reservado.
 
@@ -490,17 +579,31 @@ Almacén registra identidad/grado, lote, integridad del empaque y contaminación
 
 `InspeccionCalidad` registra cantidad, ubicación, resultado, especificación o criterio, responsable, fecha y evidencia. `DisposicionNoConforme` registra retrabajo, molienda, devolución, uso condicionado, donación o destrucción.
 
-### 8.10. OrdenEnsamble y LoteProductoTerminado
+### 8.10. OrdenOperacion, LoteWIP y LoteProductoTerminado
 
-La orden de ensamble:
+La orden de operación:
 
-- congela la revisión de BOM;
-- reserva y consume lotes o unidades de `PiezaColor`;
+- congela la operación de ruta y la revisión de estructura aplicable;
+- reserva y consume lotes o unidades de `PiezaColor` o de WIP;
 - soporta consumos parciales;
 - registra trabajador, ubicación, fecha y cantidades;
-- produce uno o más lotes de `ProductoTerminado`;
-- genera unidades logísticas de producto terminado;
-- conserva la relación entre cada lote de producto y sus lotes componentes.
+- produce mangas WIP cuando la ruta todavía no termina o mangas de
+  `ProductoTerminado` al completar la estructura comercial;
+- genera unidades logísticas con contenido tipado;
+- conserva la relación entre cada lote resultante y sus lotes componentes.
+
+La estructura/BOM canónica es revisionada (`RevisionEstructuraArticulo`) con estado, vigencia, hash y aprobador. Cada confirmación de bolsa conserva revisión/hash y sus consumos concretos. La genealogía exacta usa asignaciones con cantidad; `CONJUNTO_CANDIDATOS` usa un pool contado con orígenes N:M sin reparto; `LEGACY_SIN_ORIGEN` usa apertura contada.
+
+Una `OrdenOperacion` de prearmado o armado —denominada funcionalmente `OrdenArmado`— puede ejecutarse concurrentemente con una OT de inyección. El `ot_contexto_id` facilita operación y monitoreo, pero no convierte piezas traídas de inventario en producción del molde actual. La ejecución conserva por separado:
+
+- unidades y kg estándar producidos por la OT actual;
+- unidades de WIP o producto confirmadas y componentes anteriores consumidos;
+- peso físico total de sus bolsas;
+- residual entre el peso esperado por BOM y el medido.
+
+Durante el llenado se permiten eventos idempotentes/secuenciados de `AvanceOperacion` para mostrar cantidad provisional abierta. Esos eventos no consumen saldo ni acreditan inventario. Al pesar una manga, `provisional_cutoff_seq` liquida el avance y el comando de confirmación aplica en una sola transacción central la cantidad asignada, la acreditación de cuerpos buenos aún pendiente, reservas/consumos de inventario/WIP, validación de estructura, acreditación del lote productivo y pesaje. La manga resultante queda pendiente de recepción y sin Kardex.
+
+Componentes incorporados cumplen `cantidad_confirmada × cantidad_bom_snapshot`; scrap de armado se consume aparte y no forma parte del peso esperado de la bolsa. Una corrección de peso no corrige cantidades automáticamente, ni una corrección de cantidad altera el peso físico sin repesaje/reapertura.
 
 ### 8.11. Despacho
 
@@ -540,6 +643,8 @@ Campos mínimos del evento:
 
 No se debe reemplazar todo el modelo relacional por un JSON genérico.
 
+En comandos externos, `operation_id` es la clave del inbox y se copia como `source_event_id` del evento superior. Los múltiples efectos relacionales no compiten por esa unicidad: derivan `effect_id` determinísticos mediante tipo y clave estable de línea. Un hash canónico distingue replay exacto de conflicto.
+
 ## 9. Critical Tracking Events y KDE Obligatorios
 
 | CTE | Qué se rastrea | KDE mínimos |
@@ -548,13 +653,13 @@ No se debe reemplazar todo el modelo relacional por un JSON genérico.
 | RECHAZO_RECEPCION | Entrega no aceptada en custodia | proveedor, material, cantidades conocidas, lote si existe, documento, motivo, evidencia, trabajador, fecha/offset |
 | INSPECCION | Lote o salida | objeto, criterio, resultado, estado anterior/nuevo, responsable, evidencia, fecha |
 | UBICACION | Lote/unidad | objeto, origen, destino, cantidad, trabajador, fecha, motivo |
-| RESERVA | Lote material o unidad | objeto, cantidad, OP/orden ensamble, responsable, fecha |
+| RESERVA | Lote material o unidad | objeto, cantidad, OF/OA, responsable, fecha |
 | EMISION_MATERIAL | Lote material | lote entrada, lote producción, cantidad, origen, destino, balanza, trabajador, fecha |
 | DEVOLUCION_MATERIAL | Material emitido no consumido | emisión de origen, lote material, cantidad, condición de identidad, origen, destino, trabajador, fecha |
 | TRANSFORMACION_PRODUCCION | Entradas y salidas | lotes input, cantidades, lote producción, salidas, máquina, molde, fórmula, trabajadores, tiempo |
-| PESAJE_EMBALAJE | Unidad logística | salida, peso bruto/tara/neto, cantidad, balanza, trabajador, ubicación, fecha |
+| PESAJE_EMBALAJE | Unidad logística | salida, peso bruto/tara/neto, cantidad/fuente, reserva, balanza, trabajador, ubicación, fecha, estado sync |
 | AGREGACION | Caja/pallet/paquete | padre, hijos, acción ADD/DELETE, ubicación, trabajador, fecha |
-| ENSAMBLE | Componentes y PT | lotes componente, cantidades, BOM revisión, lote PT, responsable, ubicación, fecha |
+| TRANSFORMACION_OPERACION | Componentes y salida WIP/PT | confirmación/bolsa, componentes incorporados, scrap separado, asignaciones/pool candidato, estructura y ruta revisión/hash, lote WIP o PT, responsable, ubicación, fecha |
 | DESPACHO | Unidades/lotes | cliente, documento, unidades, cantidades, origen, transportista, fecha |
 | DEVOLUCION_PROVEEDOR | Cantidad total/parcial devuelta después de recepción | proveedor destino, recepción/lote original, cantidad, origen, estado calidad, documento, motivo, evidencia, trabajador, fecha |
 | MOLIENDA_REPROCESO | Rechazo/ramal y material segunda | inputs, cantidades, lote material output, máquina/proceso, responsable, fecha |
@@ -580,8 +685,8 @@ No se debe reemplazar todo el modelo relacional por un JSON genérico.
 1. Registrar demanda de uno o más `ProductoTerminado` y congelar la revisión de su BOM.
 2. Explotar la demanda hacia `PiezaColor`, descontar únicamente cobertura no comprometida y mostrar faltantes netos.
 3. Convertir faltantes en propuestas por molde y `ColorProduccion`, con ciclos enteros, salidas y excedentes visibles.
-4. Confirmar una o varias OP en borrador y completar su configuración técnica.
-5. Liberar explícitamente la OP, congelando molde, piezas, fórmula/revisión, máquina prevista y BOM de salida.
+4. Confirmar una o varias propuestas OF/OA en borrador y sus asignaciones N:M a líneas OP.
+5. Liberar explícitamente OF/OA, congelando configuración técnica, ruta, fórmula/revisión y salidas.
 6. Resolver materiales planificados a cantidades absolutas con base de dosificación explícita.
 7. Reservar lotes disponibles mediante una política versionada o selección autorizada.
 8. No afirmar FEFO mientras no existan fechas de vencimiento/reanálisis confiables.
@@ -600,24 +705,33 @@ No se debe reemplazar todo el modelo relacional por un JSON genérico.
 
 ### 10.4. Transformación por inyección o soplado
 
-1. Iniciar lote de producción.
-2. Confirmar qué cantidades emitidas o lotes de mezcla entran realmente a la transformación.
-3. Registrar máquina, molde, trabajadores y parámetros efectivos.
-4. Enlazar detalles horarios con `lote_produccion_id`.
-5. Calcular y registrar salidas por cada `LoteSalidaPiezaColor`.
-6. Registrar buenos, rechazados, ramal, reproceso y pérdida real por separado.
-7. Cerrar el lote solo si el balance está conciliado o existe desviación autorizada.
+1. Crear centralmente una OT —la misma cabecera que la Hoja/Registro Diario— desde una OF/corrida liberada.
+2. Asignar identificador global y correlativo idempotente; la estación imprime sin convertirse en autoridad de la OT.
+3. Iniciar lote de producción.
+4. Confirmar qué cantidades emitidas o lotes de mezcla entran realmente a la transformación.
+5. Registrar máquina, molde, trabajadores y parámetros efectivos.
+6. Enlazar detalles horarios con `ot_id` y `lote_produccion_id`.
+7. Calcular y registrar salidas por cada `LoteSalidaPiezaColor`.
+8. Al liberar la OF/corrida, calcular el plan agregado de mangas; al crear la OT, asignar el tramo diario, generar identidades sin peso/inventario e imprimirlas localmente en formato 2-up.
+9. Registrar buenos, rechazados, ramal, reproceso y pérdida real por separado; solo los buenos confirmados acreditan `SaldoWIPSalida`.
+10. Debitar ese WIP una sola vez como `EMBALAJE_DIRECTO` o `CONSUMO_EN_LINEA_ARMADO`, sin exigir bolsa intermedia para el segundo destino.
+11. Crear `ReservaWIPSalida` antes de habilitar una manga; salida simple fija cantidad asignada y armado fija modo/cantidad máxima.
+12. Proyectar en tiempo real ciclos, unidades/masa estándar de la OT, avance provisional de armado, armado confirmado y kg físicos embalados como métricas distintas.
+13. Cerrar el lote solo si el balance está conciliado o existe desviación autorizada, todas sus mangas directas están pesadas/anuladas y cada salida buena conserva destino o WIP explícito.
+14. El cierre de la OT espera todo `CREDITO_EN_LINEA_PENDIENTE`; después no cancela una `OrdenOperacion` que solo la usa como contexto y cuyos pendientes se resuelven bajo esa orden.
 
-### 10.5. Pesaje y creación de unidad logística
+### 10.5. Pesaje y manga pendiente de recepción
 
-1. Seleccionar o escanear la salida exacta.
+1. Escanear una etiqueta vigente de manga y resolver su contenido tipado: salida simple, WIP o producto terminado.
 2. Capturar tara y peso bruto desde balanza.
 3. Calcular peso neto.
-4. Registrar cantidad de piezas cuando aplique.
-5. Crear `UnidadLogistica` con UUID.
-6. Imprimir etiqueta versionada.
-7. Sincronizar de forma idempotente.
-8. Ingresar la salida `PiezaColor` a una ubicación compatible con piezas y a un estado de calidad válido.
+4. Tomar la cantidad asignada como confirmación implícita, sin input manual ni inferencia desde kg.
+5. Aplicar la reserva, debitar WIP y registrar el pesaje sin cambiar el identificador de manga.
+6. Imprimir una etiqueta `POSTPESAJE` versionada y distinta de la de prepesaje.
+7. Exigir conexión central en el piloto y conservar idempotencia ante pérdida de respuesta.
+8. Dejar `ubicacion_id=null`, `estado_inventario=NO_INGRESADA` y `PENDIENTE_RECEPCION_ALMACEN`.
+9. Conservar el neto físico completo; para armado, no atribuirlo íntegramente a la OT de contexto.
+10. Para una transformación embolsada, usar un solo comando idempotente que confirme pesaje, cantidad, consumos y lote WIP o terminado, sin movimiento inicial de Kardex.
 
 ### 10.6. Inventario interno
 
@@ -638,16 +752,30 @@ No se debe reemplazar todo el modelo relacional por un JSON genérico.
 7. **Validación operativa 2026-07-14:** EnvaPerú muele la merma y vuelve a procesarla. La salida puede embolsarse en cantidades variables cercanas a `30 kg` y se pesa durante la operación del molino. Ese valor no es un peso nominal fijo; US-010E debe conservar la medición real y la genealogía hacia todos los lotes de origen.
 8. Ubicar el material de segunda en una zona compatible con materias primas recuperadas, nunca en almacén de piezas o producto terminado.
 
-### 10.8. Armado de ProductoTerminado
+### 10.8. Prearmado WIP y armado final
 
-1. Crear Orden de Ensamble y congelar BOM.
-2. Reservar lotes/unidades de cada `PiezaColor` requerida.
-3. Consumir cantidades reales, incluso parciales.
-4. Crear lote de `ProductoTerminado`.
-5. Empacar en unidades logísticas.
-6. Registrar agregaciones caja/pallet cuando correspondan.
-7. Liberar producto terminado antes de despacho.
-8. Ingresar las unidades liberadas a una ubicación compatible con producto terminado.
+1. Crear `OrdenOperacion` y congelar ruta, estructura y artículo de salida.
+2. Crear una OT de Armado para la cuota diaria, fecha, turno, centro y
+   responsable.
+3. Vincular opcionalmente una OT de Fabricación como contexto cuando el armado
+   ocurre entre ciclos.
+4. Reservar lotes/unidades `LIBERADO` de cada `PiezaColor` o WIP requerido; una mezcla usa pool candidato contado y legacy usa apertura contada.
+5. Vincular el `SaldoWIPSalida` de cuerpos producidos en línea y crear centralmente la reserva `SALDO_EXISTENTE` o `CREDITO_EN_LINEA_PENDIENTE`.
+6. Reservar las mangas planificadas, todavía sin cantidad real, peso ni saldo,
+   con revisiones/hashes congelados.
+7. Solicitar preetiquetas desde Armado; temporalmente la impresión se ejecuta
+   en la estación de pesaje.
+8. Registrar avances incrementales provisionales durante el armado.
+9. El responsable de Armado confirma cantidad real y consumos mediante
+   `CERRAR_MANGA_ARMADO`; acredita el resultado y deja la manga pendiente de
+   pesaje.
+10. Pesar obligatoriamente toda manga PT mediante `CONFIRMAR_PESAJE_MANGA`, sin
+   volver a consumir ni acreditar.
+11. Separar peso físico medido de aportes estándar derivados.
+12. Recibir en Almacén con Calidad `PENDIENTE`; Calidad libera posteriormente.
+13. Registrar agregaciones caja/pallet cuando correspondan.
+12. Liberar el resultado conforme a su política de calidad; solo un producto terminado liberado puede despacharse.
+13. Entregar las mangas a Almacén; su ingreso a ubicación e inventario pertenece a US-010I.
 
 ### 10.9. Despacho
 
@@ -699,15 +827,19 @@ Reglas:
 - Todo material de segunda producido se convierte en lote de salida de una transformación.
 - La tolerancia de balance se configura por proceso o familia de máquina.
 - Una diferencia fuera de tolerancia requiere motivo y aprobación.
+- El balance de una OT de inyección excluye componentes anteriores incorporados por armado.
+- El balance de armado conserva el neto físico del producto y compara contra cantidades/pesos unitarios de su BOM ejecutada.
+- Un único pesaje compuesto no demuestra el peso real aislado de cada componente; sus aportes son estándar derivados.
 
 ## 12. Identificación y Etiquetado
 
 ### 12.1. IDs internos
 
 - `LoteMaterial`: UUID/ULID + código legible.
-- `LoteProduccion`: UUID/ULID + código OP/secuencia.
+- `CorridaFabricacion`: UUID/ULID + código OF/secuencia.
 - `LoteSalidaPiezaColor`: UUID/ULID + código de lote de salida.
-- `LoteProductoTerminado`: UUID/ULID + código legible.
+- `LoteWIP`: UUID/ULID + código legible.
+- [[Lote_Producto_Terminado]]: UUID/ULID + código legible.
 - `UnidadLogistica`: UUID/ULID.
 - `EventoTrazabilidad`: UUID/ULID.
 
@@ -716,9 +848,21 @@ Reglas:
 Se reemplaza el formato posicional por uno de estos contratos versionados:
 
 - URI interna: `https://sistema.envaperu.pe/t/<trace_id>`; o
-- JSON compacto firmado/versionado cuando deba funcionar totalmente offline.
+- JSON compacto firmado/versionado para integridad y evolución del contrato.
 
 El payload mínimo incluye versión, tipo de objeto, ID y checksum o firma. Los datos descriptivos se consultan o cachean; no son la identidad.
+
+La primera integración distingue como mínimo:
+
+- `FABRICATION_ORDER`: permite a la estación resolver una OF/corrida liberada;
+- `WORK_ORDER`: identifica la OT/Hoja de Producción canónica;
+- `SCM_MANGA`: identifica la manga estable antes y después de pesarla;
+- `SCM_MANGA_LABEL`: identifica una impresión concreta mediante `manga_id`, `label_id`, tipo y versión;
+- `OPERATION_ORDER`: identifica una `OrdenOperacion`, incluida una ejecución de prearmado realizada en línea. `ASSEMBLY_ORDER` puede mantenerse solo como alias de compatibilidad;
+
+Para `SCM_MANGA_LABEL`, la API valida vigencia de la etiqueta y resuelve por `manga_id` el tipo físico, contenido, estado y modo UI. Reemplazar una etiqueta invalida su `label_id`, no crea otra manga.
+
+El QR posicional legacy separado por `;` puede leerse únicamente en conciliación; no crea OT, pesaje ni inventario SCM autoritativos.
 
 ### 12.3. GS1
 
@@ -762,25 +906,55 @@ Estas APIs todavía no confirman custodia: no crean lote, sticker, saldo ni movi
 - `POST /api/produccion/lotes/<id>/iniciar`.
 - `POST /api/produccion/lotes/<id>/cerrar`.
 - `GET /api/produccion/lotes/<id>/balance`.
+- `POST /api/produccion/ordenes/<op_id>/ots` para crear idempotentemente la OT canónica.
+- `GET /api/produccion/ots/<id>` para entregar a la estación el snapshot operativo.
+- `POST /api/scm/ordenes-trabajo/<id>/salidas` para vincular a la OT los `LoteSalidaPiezaColor` derivados de la OF/corrida.
+- `POST /api/scm/ordenes-fabricacion/<of_id>/plan-mangas/recalcular` para calcular el plan agregado al liberar/replanificar una OF.
+- `POST /api/produccion/ots/<id>/mangas-planificadas` para asignar el tramo diario y reservar identidades físicas sin peso ni saldo.
+- `POST /api/produccion/ots/<id>/salidas/<salida_id>/buenos` para acreditar unidades reales al `SaldoWIPSalida` mediante `operation_id`.
+- `POST /api/produccion/ots/<id>/salidas/<salida_id>/reservas-wip` para asignar cantidad/modo/manga/estación antes de pesar.
+- `POST /api/produccion/ots/<id>/reservas-wip/<reserva_id>/anular` para liberar o conciliar explícitamente sin reutilización silenciosa.
+- `GET /api/produccion/ots/<id>/saldo-wip` para consultar la proyección y sus destinos.
+- `POST /api/produccion/ots/<id>/cerrar` valida balance, bolsas directas pendientes y WIP explícito antes de cerrar.
 
 ### 13.3. Salidas, pesaje e inventario
 
 - `GET /api/produccion/lotes/<id>/salidas`.
-- `POST /api/pesajes` con `source_system` y `source_event_id`.
-- `POST /api/inventario/unidades`.
-- `POST /api/inventario/movimientos`.
+- `GET /api/produccion/ots/<ot_id>/mangas` para consultar el trabajo autorizado de la estación.
+- `POST /api/scm/mangas/<id>/pesaje` con `station_id`, `operation_id`, etiqueta/reserva/versiones y cantidad asignada; aplica la reserva, debita WIP, registra el peso y deja `PENDIENTE_RECEPCION_ALMACEN` en una sola transacción idempotente.
+- `POST /api/scm/mangas/<id>/correcciones-peso` para compensaciones auditadas.
+- `POST /api/scm/mangas/<id>/etiquetas/<label_id>/reemplazos` para invalidación y nueva versión autorizadas por JP.
+- `POST /api/scm/v1/recepcion-mangas/confirmar` implementa US-010I y crea de forma idempotente la existencia 1:1, el saldo físico/no disponible y el movimiento `INGRESO_PRODUCCION`.
+- `POST /api/inventario/unidades/<id>/movimientos` para movimientos posteriores al alta inicial.
 - `POST /api/inventario/unidades/<id>/dividir`.
 - `POST /api/inventario/unidades/consolidar`.
 - `GET /api/inventario/unidades/<id>`.
 
-### 13.4. Armado y despacho
+Las rutas son contratos conceptuales que la Tech Spec fijará. El flujo de pesaje no llama a inventario: un reintento nunca duplica captura, consumos ni manga. La recepción de Almacén es una operación posterior y explícita.
 
-- `POST /api/scm/ordenes-ensamble`.
-- `POST /api/scm/ordenes-ensamble/<id>/consumos`.
-- `POST /api/scm/ordenes-ensamble/<id>/completar`.
+### 13.4. Operaciones de prearmado/armado y despacho
+
+- `POST /api/scm/ordenes-operacion`.
+- `POST /api/scm/ordenes-operacion/<id>/iniciar`.
+- `POST /api/scm/ordenes-operacion/<id>/mangas-planificadas`.
+- `POST /api/scm/ordenes-operacion/<id>/avances` registra incrementos provisionales idempotentes con `bag_progress_seq`, sin efecto de inventario.
+- `POST /api/scm/v1/mangas/<manga_id>/cerrar-armado` recibe
+  `CERRAR_MANGA_ARMADO`; concilia avance, confirma cantidad real, consume
+  inventario/WIP, valida estructura/scrap y acredita el resultado sin peso ni
+  Kardex.
+- `POST /api/integration/v1/manga-weighings` registra después el peso físico y
+  deja la manga pendiente de recepción, sin repetir los efectos de Armado.
+- `POST /api/scm/ordenes-operacion/<id>/correcciones` aplica compensaciones coherentes a todos los efectos del comando original.
+- `POST /api/scm/ordenes-operacion/<id>/cerrar` rechaza bolsas, reservas o comandos pendientes.
 - `POST /api/scm/despachos`.
 - `POST /api/scm/despachos/<id>/unidades`.
 - `POST /api/scm/despachos/<id>/confirmar`.
+
+La Tech Spec de US-010R decidirá si expone temporalmente `/ordenes-armado` y `CONFIRMAR_BOLSA_ENSAMBLADA` como aliases de compatibilidad; no serán otro agregado ni otra transacción.
+
+Los endpoints de reserva o borrador pueden preparar asignaciones, pero F2 no encadena `pesaje -> consumos -> completar`. El outbox conserva un único envelope y central devuelve el mismo resultado ante replay exacto o `IDEMPOTENCY_CONFLICT` si cambia el payload.
+
+El inbox usa `(source_system, operation_id)` más hash canónico. Los `effect_id` hijos se derivan de `operation_id + effect_kind + line_key`; `source_event_id` del evento superior es el mismo `operation_id` y no compite como otra clave.
 
 ### 13.5. Trazabilidad
 
@@ -802,13 +976,13 @@ Estas APIs todavía no confirman custodia: no crean lote, sticker, saldo ni movi
 - certificados/evidencia;
 - historial de movimientos y consumos.
 
-### 14.2. Planificación de demanda y OP
+### 14.2. Planificación de demanda OP y órdenes ejecutables
 
 - demanda de uno o más `ProductoTerminado` con cantidad y fecha requerida;
 - snapshot y explosión de BOM hacia `PiezaColor`;
 - cobertura con stock y suministro no comprometidos;
 - propuestas por molde/color con ciclos enteros, contingencia y excedentes visibles;
-- configuración y liberación de OP antes de calcular materiales.
+- configuración y liberación de OF antes de calcular materiales.
 
 ### 14.3. Preparación de materiales
 
@@ -837,8 +1011,11 @@ Estas APIs todavía no confirman custodia: no crean lote, sticker, saldo ni movi
 - BOM snapshot;
 - disponibilidad por lote de componente;
 - consumos reales;
-- lote de producto terminado creado;
+- manga PT y confirmación productiva creadas; partida PT opcional;
 - paquetes y pallets resultantes.
+- OT de contexto cuando el armado ocurre en línea;
+- avance separado de máquina, conjuntos armados y peso físico;
+- nivel de genealogía y desviación contra BOM.
 
 ### 14.7. Despacho
 
@@ -855,18 +1032,20 @@ Debe mostrar:
 - timeline de eventos;
 - grafo de genealogía de entradas y salidas;
 - ubicación y estado actuales;
-- OP, máquina, molde, trabajadores, fórmula y calidad;
+- OP de demanda, OF/OA, OT, máquina, molde, trabajadores, fórmula y calidad;
 - proveedor hacia atrás;
 - despacho y receptor hacia adelante;
 - huecos o eventos no conciliados.
 
 ## 15. Consultas Obligatorias
 
-1. Dado un QR de bulto, mostrar su lote de salida, OP, RDP, pesaje, trabajadores, máquina, molde, materiales consumidos y movimientos.
+1. Dado un QR de bulto, mostrar su lote de salida, OF/corrida, OT, OP asignadas,
+   pesaje, trabajadores, máquina, molde, materiales consumidos y movimientos.
 2. Dado un lote de materia prima, mostrar saldo, consumos, lotes de producción, salidas, unidades, productos y despachos afectados.
 3. Dado un lote de producto terminado, mostrar todos los lotes de `PiezaColor` que lo componen.
 4. Dado un cliente o despacho, mostrar lotes y unidades enviados.
-5. Dada una OP, reconciliar plan, consumo, salidas, WIP, rechazo y merma.
+5. Dada una OP, reconciliar demanda, asignaciones y PT satisfechos; dada una OF,
+   reconciliar plan técnico, consumo, salidas, WIP, rechazo y merma.
 6. Dada una no conformidad, producir una lista bloqueable de objetos afectados.
 7. Dado un evento offline, demostrar si fue aplicado, rechazado, duplicado o corregido.
 
@@ -883,7 +1062,7 @@ Debe mostrar:
 ### Escenario 2: Material bloqueado no puede reservarse ni emitirse
 
 **Dado** una cantidad `PENDIENTE` o `BLOQUEADA`, aunque esté físicamente en almacén o cuarentena
-**Cuando** se intenta emitirlo a una OP  
+**Cuando** se intenta emitirlo a una OF<br>
 **Entonces** la UI y API rechazan la reserva o emisión
 **Y** registran el intento con su motivo.
 
@@ -910,7 +1089,7 @@ Debe mostrar:
 
 ### Escenario 6: Pesaje crea unidad logística idempotente
 
-**Dado** un pesaje offline con UUID `E1`  
+**Dado** un pesaje offline con identificador global `E1`<br>
 **Cuando** el dispositivo lo sincroniza dos veces  
 **Entonces** se crea un solo pesaje y una sola unidad logística  
 **Y** ambos intentos retornan el mismo resultado central.
@@ -934,14 +1113,16 @@ Debe mostrar:
 **Dado** un bulto con 500 piezas  
 **Cuando** armado consume 300  
 **Entonces** quedan 200 disponibles en la unidad o subunidad resultante  
-**Y** la genealogía vincula la cantidad consumida con la Orden de Ensamble.
+**Y** la genealogía vincula la cantidad consumida con la `OrdenOperacion`.
 
-### Escenario 10: Armado produce lote de ProductoTerminado
+### Escenario 10: Prearmado concurrente no infla la OT
 
-**Dado** una BOM con cuerpo y tapa  
-**Cuando** se consumen lotes liberados de ambos componentes  
-**Entonces** se crea un `LoteProductoTerminado`  
-**Y** puede trazarse hacia cada lote componente y sus materiales de origen.
+**Dado** una OT que produce cuerpos de balde y un prearmado que consume asas de otra OT y otro molde<br>
+**Cuando** se pesan juntos 100 baldes con sus asas<br>
+**Entonces** se crea un `LoteWIP` trazable hacia ambos lotes componente si aún quedan operaciones de ruta<br>
+**Y** solo se crea [[Lote_Producto_Terminado]] cuando la confirmación completa la estructura comercial<br>
+**Y** la OT actual acredita solo cuerpos y kg estándar correspondientes<br>
+**Y** el dashboard separa WIP confirmados, asas consumidas y peso físico total.
 
 ### Escenario 11: Molienda genera material de segunda
 
@@ -1022,8 +1203,9 @@ La base de US-010A ya avanzó localmente mediante la cadena Alembic `f02b00ae2e6
 2. Crear catálogo jerárquico de ubicaciones con propósito de inventario y mapear strings actuales sin fusionar almacenes de materias primas, piezas y producto terminado.
 3. Convertir `InventarioManga` en unidades logísticas o mantenerlo como vista de compatibilidad.
 4. Preservar íntegramente `qr_data_original` y snapshots.
-5. Crear `LoteProduccion` desde lotes actuales de OP.
-6. Crear `LoteSalidaPiezaColor` donde OP, snapshot y `ColorProduccion` permitan una resolución inequívoca.
+5. Migrar `LoteColor` a corridas de OF preservando IDs/alias legacy.
+6. Crear o reconciliar `LoteSalidaPiezaColor` donde OF, snapshot y
+   `ColorProduccion` permitan una resolución inequívoca.
 7. Enlazar pesajes que contengan una salida válida.
 8. Asignar `source_system` y `source_event_id` a registros offline migrables.
 9. Importar movimientos kardex como eventos históricos sin reescribir timestamps.
@@ -1053,23 +1235,67 @@ Esta historia es una épica. Debe dividirse en cortes verticales que entreguen t
 | Fase | Resultado observable | Capacidad transversal introducida | Dependencia |
 |---|---|---|---|
 | [[US-010A_Recepcion_Trazable_Materiales|US-010A]] | Recibir un lote y conocer su proveedor, documento, estado de calidad, cantidad y ubicación | Identidad global, actor, ubicación, tiempo, motivo e idempotencia de eventos | US-009 |
-| [[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP|US-010P]] | Convertir demanda de `ProductoTerminado` en faltantes de `PiezaColor` y OP técnicas liberables | Snapshot de BOM, cobertura sin doble conteo, ciclos enteros y relación demanda-OP N:M | US-007/008; contrato de inventario de piezas/PT, con fixtures o adaptador hasta US-010D/F |
-| [[US-010B_Reserva_Emision_Materiales_OP|US-010B]] | Calcular requerimientos, reservar, emitir y preparar resina ya coloreada con genealogía, sin confundir emisión con consumo | Reserva atómica, base de dosificación explícita, transformación de premezcla y WIP | Contratos de OP liberada US-010P y disponibilidad US-010A; ambos admiten fixtures antes del E2E |
-| US-010C | Consumir la premezcla, ejecutar una corrida y obtener `LoteSalidaPiezaColor` con balance de masa | Transformación, genealogía y tolerancias | US-007/008, US-010B |
-| US-010D | Pesar una salida, crear su unidad logística y moverla sin duplicados | QR versionado, sincronización offline y kardex normalizado | US-010A/C |
-| US-010E | Recuperar ramal o rechazo como material de segunda trazable | Transformación de reproceso y clasificación de disposición | US-010B/C/D |
-| US-010F | Armar un lote de `ProductoTerminado` consumiendo lotes de componentes | Agregación, desagregación y BOM ejecutada | US-010C/D |
-| US-010G | Despachar, devolver y consultar impacto hacia atrás y adelante | Receptor, documentos, explorador y simulación de retiro | US-010D/F |
+| [[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque|US-010R]] | Aprobar artículos, BOM multinivel, rutas, WIP y reglas de empaque para una referencia real | Artículo común, grafo acíclico, `LoteWIP` y capacidad de bolsa versionada | US-007/008 |
+| [[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP|US-010P]] | Crear OP de demanda y convertir faltantes en OF/OA liberables | Snapshot BOM/ruta, cobertura N:M sin doble conteo, ciclos enteros y asignaciones de suministro | US-010R e inventario de piezas/WIP/PT |
+| [[US-010B_Reserva_Emision_Materiales_OP|US-010B]] | Calcular requerimientos, reservar, emitir y preparar resina para una OF | Reserva atómica, dosificación explícita, transformación de premezcla y WIP | OF liberada US-010P y saldos nacidos por US-010A o apertura inicial aprobada |
+| [[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas|US-010C]] | Calcular mangas desde OF/corrida, crear centralmente OT/RDP y emitir etiquetas | Correlativo idempotente, fecha operativa, etiqueta, Saldo/ReservaWIPSalida y reglas normal/extra | OF liberada, US-007/008 y US-010B |
+| [[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion|US-010D-core]] | Escanear una manga planificada de pieza, WIP o producto, pesarla y dejarla pendiente de recepción sin duplicados | QR/etiqueta versionados, contenido tipado, cantidad asignada sin digitación y cero Kardex | Kardex común, US-010C/R; no exige recepción de compras |
+| [[US-010I_Ingreso_Almacen_Mangas_y_Nacimiento_Kardex|US-010I]] | Recibir la manga por QR en Almacén y crear su existencia inicial pendiente de Calidad | Recepción idempotente, ubicación, Calidad y movimiento inicial | US-010D/F |
+| [[US-010E_Molienda_y_Material_Recuperado_Trazable|US-010E]] | Recuperar ramal, rechazo o PiezaColor dañada como material de segunda trazable | Compatibilidad por material/proceso/color, dilución controlada, balance y genealogía N:M | US-010B/C/D/F/I |
+| [[US-010L_Material_Segunda_Reproceso_y_Mezcla_Preparada_Trazable|US-010L]] | Recibir/producir segunda coloreada y preparar mezclas mediante aportes realmente pesados | Generación R1…Rn, dosificación, formulación real, Calidad, inventario intermedio y abastecimiento a Trabajo de color | US-010A/B/E y refactor OT/Trabajo de color |
+| [[US-010H_Abastecimiento_Interno_Picking_QR_y_Consumo_Mangas|US-010H]] | Abastecer una OT de Armado con mangas liberadas, transferir custodia y conciliar consumo o retorno | Picking QR, tránsito en dos pasos, consumo parcial, fraccionamiento y procedencia candidata | US-010I/P/R |
+| [[US-010F_Prearmado_y_Armado_Concurrente_Trazable|US-010F]] | Ejecutar en línea o en área dedicada y cerrar mangas WIP/PT antes de pesarlas | Cantidad real de Armado, genealogía N:M y separación entre cierre productivo y peso físico | US-010R/C y D-core |
+| [[US-010J_Alertas_Operativas_e_Inconsistencias|US-010J]] | Detectar y gestionar inconsistencias operativas configurables | Bandeja por capacidades, reglas versionadas y eventos origen inmutables | US-010C/D/I y US-011C |
+| US-010G | Despachar, devolver y consultar impacto hacia atrás y adelante | Receptor, documentos, explorador y simulación de retiro | US-010I/F |
 
 Ninguna fase debe crear un identificador o evento incompatible con el modelo común.
 
-US-010A está **en desarrollo**: identidad material, categorías, proveedor, OC y auditoría base ya existen; recepción física, documentos, lotes, inventario y Calidad siguen pendientes. La vista mock no equivale a ese cierre backend.
+US-010R es fundamento semántico y no una fase tardía: el pipeline de
+fabricación queda `R -> P -> B -> C -> D-core -> I`; para piezas o WIP que ya
+entraron a Almacén, el ramal de armado continúa `I -> H -> F -> D-core -> I`.
+Los cuerpos acreditados y usados en línea se enlazan directamente mediante F,
+sin crear movimientos ficticios de Almacén. Esta secuencia evita dependencia
+circular y conserva un contrato único de artículo, lote y unidad logística.
+
+### 19.1. Corte conciliado para el nuevo piloto — 2026-08-03
+
+El piloto no espera el cierre de US-010A. Comienza con un conteo físico y una
+`APERTURA_INICIAL` auditada sobre el Kardex común. La apertura no representa una
+compra, no crea proveedor, OC, guía ni lote externo y no se reutiliza para
+reabastecimientos posteriores.
+
+La apertura inicial está **implementada localmente y pendiente de UAT** como un
+lote versionado con pegado tabular, revisión segregada y aplicación atómica. El
+subledger de artículos conserva `UN`; materias primas y recuperados conservan
+`ScmMaterial` y saldos en `KG`.
+
+US-010A permanece **en desarrollo y fuera del primer lanzamiento**: identidad
+material, categorías, proveedor, OC y auditoría base existen; la recepción
+física ordinaria, documentos, lotes de proveedor, decisiones de Calidad,
+correcciones y devoluciones todavía no están cerradas de extremo a extremo.
+
+US-010B permanece **pendiente de desarrollo**. Su interfaz actual es mock y no
+existen todavía comandos transaccionales de requerimiento, reserva, emisión,
+devolución y premezcla. Este corte mínimo sí es obligatorio para el piloto,
+aunque US-010A se difiera.
+
+US-010R/P/C/D/E/F/H/I/J poseen implementación local en distintos grados y
+requieren conciliación/UAT según su TS. Molienda no depende de recepción de
+compras: el primer recorrido conserva la merma recuperable y un segundo
+recorrido valida su transformación en material recuperado. US-010G queda fuera
+del nuevo piloto.
+
+US-010I está **implementada localmente y pendiente de UAT**: el ingreso por QR,
+la ubicación compatible, el nacimiento de Kardex no disponible, la decisión
+posterior de Calidad y la compensación por corrección post-recepción ya poseen
+contrato, API, migración, permisos y vista por actor. Permanecen fuera del corte
+la reversa segregada, la decisión masiva y los criterios concretos de inspección.
 
 ### Capacidad operativa complementaria
 
 [[US-011_Monitorear_Estaciones_de_Pesaje|US-011]] permite a Gerencia observar estaciones, actividad y sincronización sin controlar remotamente la balanza. Puede pilotearse antes de US-010D mediante [[TE-004_Despliegue_Operativo_y_Observabilidad_Estacion_Pesaje|TE-004]], siempre que los datos locales pendientes y el contrato `legacy-v1` permanezcan identificados como no autoritativos. Esta capacidad no sustituye la unidad logística, el QR versionado ni la idempotencia definitiva de US-010D.
 
-### 19.1. Puerta de refinamiento antes de Tech Spec
+### 19.2. Puerta de refinamiento antes de Tech Spec
 
 No se debe crear una `TS-010` monolítica. La épica completa contiene demasiadas decisiones de negocio y superficies técnicas para ser implementada o probada como una sola unidad.
 
@@ -1095,7 +1321,7 @@ Los IDs, ubicaciones y metadatos de evento son capacidades transversales. Se int
 - Reserva y consumo parcial.
 - Conversión y exactitud de unidades de medida.
 - Trazabilidad de lotes mezclados en una misma producción.
-- Trazabilidad de un lote de entrada usado en varias OP.
+- Trazabilidad de un lote de entrada usado en varias OF y de sus OP cubiertas.
 - Balance de masa dentro y fuera de tolerancia.
 - Creación de material de segunda con genealogía.
 - Agregación, desagregación, división y consolidación.
@@ -1143,7 +1369,7 @@ Los IDs, ubicaciones y metadatos de evento son capacidades transversales. Se int
 ### Vault
 
 - actualizar todos los documentos de `01_Dominio`;
-- crear documentos para lotes, unidades, movimientos, calidad, ensamble, despacho y eventos;
+- crear documentos para lotes, unidades, movimientos, calidad, armado, despacho y eventos;
 - sustituir definiciones legacy de color, pesaje y kardex;
 - registrar una ADR del perfil ISO 9001 + ISA-95 + GS1.
 
@@ -1170,7 +1396,8 @@ La épica se considera terminada cuando:
 5. Todo movimiento utiliza ubicaciones y actores normalizados y rechaza almacenes incompatibles con el tipo de inventario.
 6. Calidad puede liberar, bloquear y disponer cantidades totales o parciales sin alterar existencia, genealogía ni historial.
 7. Ramal y rechazo recuperados generan lotes trazables de material de segunda.
-8. El armado relaciona componentes consumidos con el lote de producto creado.
+8. Cada prearmado o armado relaciona componentes consumidos con la manga WIP
+   o PT concreta y su confirmación; una partida PT adicional es opcional.
 9. Todo despacho identifica receptor, documento, unidades y cantidades.
 10. Las consultas backward y forward recorren recepción, producción, inventario, armado y despacho.
 11. Las correcciones se realizan mediante eventos auditables, no edición destructiva.

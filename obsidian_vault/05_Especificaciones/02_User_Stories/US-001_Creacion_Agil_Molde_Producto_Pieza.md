@@ -2,7 +2,7 @@
 tipo: user_story
 id: US-001
 titulo: Creación Ágil de Molde-Producto-Pieza
-estado: draft
+estado: sustituida-parcialmente
 draft_origen: "[[01_Drafts/Creacion de Molde-Producto-Pieza]]"
 tags:
   - catalogo
@@ -12,6 +12,7 @@ tags:
   - config-rapida
   - integridad
 fecha_creacion: 2026-06-08
+fecha_actualizacion: 2026-08-10
 actores:
   - Supervisor de Planta
   - Planificador de Producción
@@ -19,12 +20,21 @@ relaciones:
   - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
   - "[[TS-013_Codigos_Correlativos_Automaticos_Catalogo]]"
   - "[[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD]]"
+  - "[[US-007_Normalizar_ProductoTerminado_PiezaColor_Salidas_OP]]"
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
+  - "[[US-012_Alta_Guiada_Integral_de_ProductoTerminado]]"
 ---
 
 # US-001: Creación Ágil de Molde-Producto-Pieza
 
+> [!IMPORTANT] Sustitución de experiencia
+> Esta historia conserva las reglas físicas de Molde–Pieza y color por golpe. La interfaz principal de alta nueva pasa a [[US-012_Alta_Guiada_Integral_de_ProductoTerminado|US-012]]. Las referencias a Configuración Rápida, KIT y una creación integral de PT en este documento son antecedentes y no instrucciones vigentes.
+
 > [!IMPORTANT] Corrección de clasificación aprobada
 > [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD|TS-014]] confirma que Línea y Familia se relacionan N:M mediante `LineaFamilia`. Las listas ya no son constantes del frontend y el par se valida en backend. La misma TS incorpora su CRUD lógico/versionado.
+
+> [!IMPORTANT] Modelo KIT retirado
+> Las secciones de esta historia que crean `PiezaColor.tipo=KIT` o `PiezaComponente` se conservan únicamente como antecedente. El modelo vigente separa [[US-007_Normalizar_ProductoTerminado_PiezaColor_Salidas_OP|ProductoTerminado]] y adopta estructura multinivel, rutas y WIP WIP mediante [[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque|US-010R]]. Como nunca existieron datos operativos de kits, no habrá conversión automática: la migración comprobará que ambas fuentes estén vacías y se detendrá si encuentra filas inesperadas.
 
 ## Contexto y Motivación
 

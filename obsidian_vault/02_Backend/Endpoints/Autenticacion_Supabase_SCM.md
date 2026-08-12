@@ -17,7 +17,14 @@ En `SCM_AUTH_MODE=supabase`, Flask protege las rutas `/api/*`, excepto salud, in
 
 ### `GET /api/auth/me`
 
-Devuelve el trabajador autenticado, correo de la sesión, roles y capacidades efectivas. La respuesta usa `Cache-Control: private, no-store`.
+Devuelve el trabajador autenticado, correo de la sesión, roles, capacidades
+efectivas, `rol_principal` y `rol_principal_pendiente`. Solo el principal activo
+incluye foco, acceso principal y preferencias del workspace. La respuesta usa
+`Cache-Control: private, no-store`.
+
+Las capacidades continúan siendo la unión de todos los roles activos. La
+preferencia del principal nunca concede una capacidad ni vuelve accesible una
+ruta por sí sola.
 
 ## Persistencia
 

@@ -120,7 +120,9 @@ function Invoke-FrontendTests {
     Write-Host "==> Frontend suite"
     Push-Location $projectPath
     try {
-        & $npm.Source run test:run
+        # La suite comparte mocks globales y, en Windows, cuatro archivos
+        # excedían el timeout cuando Vitest saturaba todos los workers.
+        & $npm.Source run test:run -- --maxWorkers=2
         Assert-LastExitCode "Frontend suite"
     }
     finally {

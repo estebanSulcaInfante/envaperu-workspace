@@ -6,7 +6,9 @@ relaciones:
   - "[[US-011A_Dashboard_Gerencial_Avance_Pesajes]]"
   - "[[US-011_Monitorear_Estaciones_de_Pesaje]]"
   - "[[TS-TE-004_Despliegue_y_Comunicacion_Estacion_Pesaje]]"
+  - "[[US-010F_Prearmado_y_Armado_Concurrente_Trazable]]"
 fecha_creacion: 2026-07-17
+fecha_actualizacion: 2026-07-23
 ---
 
 # Vista US-011A: Dashboard de Avance por Pesajes
@@ -22,9 +24,9 @@ fecha_creacion: 2026-07-17
 
 ## Proposito
 
-Mostrar kilos y bolsas reportados por la estacion local, separados por OP y fecha operativa. La vista permite monitorear el avance sin abrir ni controlar remotamente la aplicacion instalada junto a la balanza.
+Mostrar kilos físicos y bolsas reportados por la estacion local, separados por contexto de OP y fecha operativa. La vista permite monitorear el embalaje sin abrir ni controlar remotamente la aplicacion instalada junto a la balanza.
 
-La pantalla declara `Reporte local legacy` y advierte que el dato no confirma inventario SCM, consumo ni unidad logistica.
+La pantalla actualmente declara `Reporte local legacy` y advierte que el dato no confirma inventario SCM, consumo ni unidad logistica. Queda pendiente añadir la advertencia específica de composición: tampoco demuestra que todo el peso pertenezca a la salida del molde, porque una bolsa prearmada puede incluir componentes previos como asas.
 
 ## Anatomia
 
@@ -86,3 +88,5 @@ La suite `ProductionProgressDashboard.spec.jsx` cubre:
 - El listado completo de estaciones, incluso las que no pesaron en la fecha, sigue perteneciendo a US-011.
 - La autenticacion humana permanece diferida y el acceso debe limitarse a red interna.
 - US-010D reemplazara la fuente legacy por eventos ligados a lote de salida y unidad logistica.
+- US-010F permitirá separar producción de la OT, prearmado provisional abierto, armado confirmado, componentes previos y peso físico de la bolsa; el contrato legacy actual no puede reconstruir esa composición.
+- Mientras continúe el contrato legacy, la interfaz debe incorporar el aviso de posible bolsa compuesta y renombrar la métrica como peso físico reportado; este ajuste todavía no está implementado.

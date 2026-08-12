@@ -3,6 +3,7 @@ tipo: meta
 estado: activo
 tags: [arquitectura, sistema, overview]
 fecha_creacion: 2026-04-21
+fecha_actualizacion: 2026-07-29
 ---
 
 # Arquitectura Global — EnvaPeru SCM
@@ -15,7 +16,7 @@ Sistema de gestión de cadena de suministro (Supply Chain Management) para la em
 ### 1. Backend (Core)
 - **Stack:** Python (Flask/FastAPI) + PostgreSQL
 - **Responsabilidad:** Lógica de negocio, cálculos de producción, API REST
-- **Entidades principales:** [[Orden_Produccion]], [[Lote_Color]], [[Registro_Diario]], [[Control_Peso]]
+- **Entidades principales:** [[Orden_Produccion]], [[Orden_Fabricacion]], [[Orden_Armado]], [[Registro_Diario]], [[Unidad_Logistica]]
 
 ### 2. Frontend
 - **Responsabilidad:** Interfaz de usuario para planificación, seguimiento y reportes
@@ -29,16 +30,21 @@ Sistema de gestión de cadena de suministro (Supply Chain Management) para la em
 
 ```mermaid
 graph LR
-    A[Planificación] --> B[Orden de Producción]
-    B --> C[Lotes de Color]
-    C --> D[Registro Diario / Turno]
-    D --> E[Detalle Hora x Hora]
-    D --> F[Control de Peso / Balanza]
-    F --> G[Validación Cruzada]
+    A["Planificación"] --> B["Orden de Producción (demanda PT)"]
+    B --> C["Asignaciones N:M"]
+    C --> D["Orden de Fabricación"]
+    C --> E["Orden de Armado"]
+    D --> F["Corridas por color"]
+    F --> G["Orden de Trabajo diaria"]
+    G --> H["Mangas y pesajes"]
+    E --> H
+    H --> I["Recepción de almacén"]
 ```
 
 ## Convenciones Generales
 - Los cálculos se persisten en BD y se actualizan via `actualizar_metricas()`
 - Snapshots se congelan al crear entidades hijas para consistencia histórica
 - Unidades: gramos (g) para pesos unitarios, kilogramos (kg) para totales
-- Los Float se usan sin redondeo (`math.ceil` solo en capa de presentación)
+- Los pesos conservan precisión decimal; los ciclos/coladas liberados son enteros
+- OP expresa demanda; OF/OA expresan ejecución; OT despacha trabajo diario
+- Las relaciones de cobertura entre demanda y suministro son N:M cuantificadas

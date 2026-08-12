@@ -4,7 +4,7 @@ id: US-007
 titulo: Normalizar ProductoTerminado, PiezaColor y Salidas de la OP
 estado: propuesta
 fecha_creacion: 2026-07-11
-fecha_actualizacion: 2026-07-23
+fecha_actualizacion: 2026-07-24
 tags:
   - dominio
   - normalizacion
@@ -14,6 +14,7 @@ tags:
   - lote-color
   - produccion
 relaciones:
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
   - "[[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]]"
   - "[[US-001_Creacion_Agil_Molde_Producto_Pieza]]"
   - "[[US-002_Refactor_CRUD_Molde_Pieza_Producto]]"
@@ -227,15 +228,15 @@ UNIQUE(pieza_id, color_id)
 
 Datos derivados, no duplicados:
 
-- nombre: `Pieza.nombre + ColorProducto.nombre`;
-- cavidades: desde `Pieza` o snapshot de OP;
-- peso estándar: desde `Pieza` o snapshot de OP;
+- nombre: `Pieza.nombre + ColorProduccion.nombre`;
+- cavidades: desde `MoldePieza` o snapshot de OP;
+- peso estándar operativo: desde `MoldePieza` o snapshot de OP;
 - clasificación técnica: desde `Pieza`, cuyo par `linea_id + familia_id` debe estar activo en `LineaFamilia`, sin duplicarlo definitivamente en la variante;
-- familia de color: desde `ColorProducto.familia_color_id`.
+- familia de color: desde `ColorProduccion.familia_id`.
 
 La línea y familia comerciales pertenecen a `ProductoTerminado`; no deben copiarse al SKU de pieza desde el producto que circunstancialmente la utiliza.
 
-`PiezaColor` deja de soportar `tipo=KIT`. Un kit o paquete corresponde a `ProductoTerminado`.
+`PiezaColor` deja de soportar `tipo=KIT`. [[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque|US-010R]] refina la clasificación: una composición física corresponde a `SUBENSAMBLE_WIP` cuando seguirá procesándose o a `ProductoTerminado` cuando ya es comercialmente completa. Una eventual composición fantasma queda fuera de su primer corte y no puede generar artículo inventariable, lote ni bolsa.
 
 ### 6.5. `ProductoTerminado`
 
@@ -396,7 +397,7 @@ erDiagram
 2. `PiezaColor` siempre tiene `pieza_id` y `color_id`.
 3. `ColorProducto` siempre tiene `familia_color_id`.
 4. Una combinación `Pieza + ColorProducto` produce como máximo una `PiezaColor` activa.
-5. La BOM de `ProductoTerminado` referencia únicamente `PiezaColor`.
+5. En el corte transitorio de US-007, la BOM de `ProductoTerminado` referencia únicamente `PiezaColor`; al implementar US-010R se sustituye por `RevisionEstructuraArticulo`, que también puede consumir WIP WIP sin mantener dos fuentes de verdad.
 6. `ProductoTerminado` no almacena una familia de color propia.
 7. La familia o familias de un producto se derivan de sus componentes.
 8. `PiezaColor` no puede representar un kit.
@@ -629,7 +630,7 @@ Una sugerencia histórica nunca reemplaza silenciosamente una fórmula aprobada.
 2. Renombrar `ColorProducto.familia_id` a `familia_color_id` y volverlo obligatorio.
 3. Crear constraints de unicidad para color y para `PiezaColor(pieza_id, color_id)`.
 4. Completar `pieza_id` y `color_id` faltantes en `PiezaColor`.
-5. Eliminar de `PiezaColor` los registros `tipo=KIT`, migrándolos a `ProductoTerminado` con su BOM.
+5. Verificar que no existan filas `PiezaColor.tipo=KIT` ni `PiezaComponente`, porque EnvaPerú confirmó que ese flujo nunca se utilizó. Con preflight vacío, retirar el soporte; ante cualquier fila inesperada, abortar y conciliar sin migrarla automáticamente a producto.
 6. Mantener la BOM `ProductoTerminado -> PiezaColor`; renombrar columnas y tabla para mayor claridad si se aprueba.
 7. Derivar y comparar las familias de los componentes contra los campos actuales de `ProductoTerminado`.
 8. Conservar los SKUs existentes y retirar `familia_color`, `cod_familia_color` y `familia_color_id` del producto.
@@ -704,7 +705,7 @@ No incluye todavía:
 
 - Ejecución física de armado o empaquetado de `ProductoTerminado`.
 - Consumo de inventario de piezas durante el armado.
-- Orden de Ensamble.
+- Orden de Armado.
 - Trazabilidad de lotes de materia prima de proveedor.
 - Costeo completo del paquete terminado.
 
@@ -713,7 +714,7 @@ No incluye todavía:
 1. Aprobar este glosario e invariantes.
 2. Registrar una ADR que sustituya la decisión actual sobre FamiliaColor.
 3. Normalizar `ColorProducto` y `PiezaColor`.
-4. Corregir `ProductoTerminado` y migrar kits/BOM.
+4. Corregir `ProductoTerminado`, comprobar vacío y retirar kits legacy; US-010R introduce la estructura multinivel nueva.
 5. Corregir snapshots de OP: estructura realizada; backfill y reconciliación real pendientes según §12.1.
 6. Implementar `LoteSalidaPiezaColor` y el resolver de SKU.
 7. Adaptar registro diario, pesajes e impresión.

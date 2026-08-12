@@ -1,7 +1,12 @@
 ---
 tipo: modelo_bd
 uso: modelo_bd
-tags: [dominio, color, produccion, TS-008]
+tags: [dominio, color, produccion, TS-008, US-010R]
+relaciones:
+  - "[[PiezaColor]]"
+  - "[[Articulo_SCM]]"
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
+fecha_actualizacion: 2026-07-24
 ---
 
 # ColorProduccion
@@ -31,4 +36,4 @@ Catálogo maestro de colores estandarizados para uso en la producción (ej. Rojo
 ## Relaciones
 - **Padres:** [[FamiliaColor]] y [[ColorBase]].
 - **Hijos:** [[PiezaColor]] y [[RecetaColorMaestra]].
-- **No es hijo directo:** [[ProductoTerminado]] obtiene sus colores mediante su BOM de `PiezaColor`.
+- **No es hijo directo:** [[ProductoTerminado]] obtiene sus colores recorriendo la estructura de [[Articulo_SCM]] hasta sus hojas [[PiezaColor]]; un WIP WIP no crea otro dominio de color.

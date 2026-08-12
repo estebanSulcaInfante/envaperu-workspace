@@ -7,8 +7,12 @@ relaciones:
   - "[[US-011B_Importar_Historial_y_Consultar_OP_Legacy]]"
   - "[[US-011C_Continuidad_y_Operacion_Auditada_Pesajes_Piloto]]"
   - "[[US-010_Trazabilidad_End_to_End_SCM]]"
+  - "[[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas]]"
+  - "[[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion]]"
+  - "[[US-010F_Prearmado_y_Armado_Concurrente_Trazable]]"
   - "[[TS-TE-004_Despliegue_y_Comunicacion_Estacion_Pesaje]]"
 fecha_creacion: 2026-07-17
+fecha_actualizacion: 2026-07-23
 ---
 
 # US-011A: Dashboard Gerencial Temporal de Avance por Pesajes
@@ -16,7 +20,7 @@ fecha_creacion: 2026-07-17
 ## 1. Historia
 
 **Como** Gerencia o responsable de Produccion  
-**Quiero** consultar en el sistema central los kilos pesados por OP durante una fecha operativa  
+**Quiero** consultar en el sistema central los kilos físicos pesados por contexto de OP durante una fecha operativa<br>
 **Para** monitorear el avance de planta sin desplazarme a la balanza y sin confundir el reporte temporal con inventario SCM confirmado.
 
 ## 2. Decision funcional
@@ -43,11 +47,13 @@ Cada snapshot reemplaza completamente la ventana anterior de esa estacion. Una r
 |---|---|
 | Peso y numero de bolsas | Estacion local, fuente `LOCAL_REPORTED_LEGACY`. |
 | Meta de produccion | `OrdenProduccion.calculo_peso_produccion` en central. |
-| Porcentaje | Central, solo cuando encuentra exactamente la OP y la meta es mayor que cero. |
+| Porcentaje legacy de embalaje/meta | Central, solo cuando encuentra exactamente la OP y la meta es mayor que cero; no equivale a avance de inyección si la bolsa es compuesta. |
 | Estado de comunicacion | Ultimo heartbeat recibido por central. |
 | Inventario, salida y lote | No se modifican en esta historia. |
 
 Los kilos son un indicador operativo. No crean `ControlPeso`, Kardex, consumo, lote de salida ni unidad logistica.
+
+Una bolsa puede incluir piezas producidas por la OP actual y componentes anteriores incorporados mediante prearmado. El contrato legacy no transmite esa composición. Por ello, `peso reportado / meta OP` es solo un indicador de kg físicos embolsados y puede inflar el avance de inyección; no debe presentarse como masa exclusiva producida por el molde.
 
 ## 4. Alcance
 
@@ -71,6 +77,7 @@ No incluye:
 - autenticacion humana final;
 - conciliacion contra unidades logisticas;
 - OEE, piezas buenas, rechazo, merma real o eficiencia de maquina;
+- separar dentro de una bolsa legacy el aporte de piezas actuales y componentes previamente fabricados;
 - convertir el peso legacy en existencia central.
 
 ## 5. Invariantes
@@ -85,6 +92,7 @@ No incluye:
 8. La caida central nunca impide pesar, imprimir ni consultar el historial local.
 9. La pantalla declara siempre la fuente legacy y la hora de actualizacion.
 10. Ninguna ruta de esta historia escribe en `ControlPeso` ni en inventario.
+11. El dashboard legacy no descuenta asas u otros componentes mediante porcentajes para fingir producción neta; declara la limitación de composición.
 
 ## 6. Ejemplo reproducible
 
@@ -174,4 +182,12 @@ La consulta gerencial agrega por OP y entrega el detalle dimensional sin duplica
 
 ## 11. Deuda deliberada
 
-El pesaje normalizado de US-010 reemplazara este snapshot agregado por eventos globalmente identificados y asociados a lote de salida y unidad logistica. El dashboard podra conservar su experiencia de consulta, pero debera preferir la fuente normalizada cuando exista y evitar sumar ambas fuentes.
+El pesaje normalizado de US-010 reemplazara este snapshot agregado por eventos globalmente identificados y asociados a contenido y unidad logistica. El dashboard podra conservar su experiencia de consulta, pero debera preferir la fuente normalizada cuando exista y evitar sumar ambas fuentes.
+
+La proyección normalizada separará como mínimo:
+
+- ciclos, unidades y kg estándar atribuibles a la OT actual;
+- unidades prearmadas provisionales abiertas y unidades armadas confirmadas por [[US-010F_Prearmado_y_Armado_Concurrente_Trazable|US-010F]], sin fusionarlas;
+- kg estándar de componentes previos consumidos;
+- kg físicos embolsados medidos por US-010D;
+- desviación de armado y recencia de sincronización.

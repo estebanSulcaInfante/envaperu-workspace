@@ -46,7 +46,8 @@ Al completar esta historia:
 1. Gerencia puede identificar cada estación, su ubicación lógica y la versión instalada.
 2. Puede distinguir si existe comunicación reciente con la estación, sin afirmar que una estación incomunicada está necesariamente apagada.
 3. Puede observar por separado el estado informado de balanza, impresora y sincronización.
-4. Puede conocer el último pesaje aceptado, la OP/OT reportada y el avance resumido del turno o día, declarando si proviene del contrato normalizado o del legado.
+4. Puede conocer el último pesaje aceptado, la OF/OT normalizada —o referencia
+   OP/OT legacy— y el avance resumido del turno o día, declarando la fuente.
 5. Puede ver cuántos eventos permanecen pendientes, desde cuándo y cuál fue el último error de sincronización.
 6. Las cantidades locales pendientes y las recibidas mediante `legacy-v1` se muestran como información operativa, no como inventario central confirmado.
 7. La estación continúa pesando e imprimiendo durante una caída del backend central.
@@ -276,7 +277,7 @@ La ausencia de una señal que el hardware no pueda comprobar debe mostrarse como
 | Comunicación | `RECIENTE` | `SIN_COMUNICACION` |
 | Balanza | `CONECTADA_Y_ESCUCHANDO` | `ULTIMO_ESTADO: CONECTADA` |
 | Impresora | `DISPONIBLE` | `NO_VERIFICADO` |
-| OP/OT | `OP-2026-0041 / OT-001238` | Sin contexto vigente |
+| OF/OT | `OF-000042 / OT-001238` | Referencia OP/OT solo para legado |
 | Último pesaje | `25.000 kg a las 10:14` | `30.000 kg ayer 18:42` |
 | Central recibido legacy | `475.000 kg / 19 bultos` | `120.000 kg / 4 bultos` |
 | Local pendiente | `75.000 kg / 3 eventos` | Desconocido desde la desconexión |

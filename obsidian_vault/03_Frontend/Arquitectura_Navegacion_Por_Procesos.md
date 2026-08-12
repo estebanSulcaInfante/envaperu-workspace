@@ -1,18 +1,24 @@
 ---
 tipo: arquitectura_frontend
-estado: activo
+estado: supersedido
 tags: [frontend, navegacion, scm, arquitectura-informacion]
 fecha_creacion: 2026-07-21
-fecha_actualizacion: 2026-07-21
+fecha_actualizacion: 2026-08-03
 relacionados:
   - "[[SCM_Frontend_Overview_US-010]]"
   - "[[Vista_US-010P_Planificacion_Demanda_OP]]"
   - "[[Vista_US-010A_Recepcion_Materiales]]"
   - "[[Vista_US-010B_Preparacion_Materiales]]"
   - "[[Patron_Tablas_Filtros_y_Omnibusqueda]]"
+  - "[[Arquitectura_Guia_SCM_Markdown]]"
 ---
 
 # Navegación del SCM por Procesos
+
+> [!warning] Documento supersedido
+> La arquitectura vigente se encuentra en
+> [[Arquitectura_Workspace_SCM_por_Areas]]. Esta nota se conserva para explicar
+> las rutas y la primera separación histórica entre procesos y soporte.
 
 ## Objetivo
 
@@ -41,7 +47,7 @@ Las pestañas aparecen únicamente al entrar a un módulo:
 
 ### Soporte transversal
 
-`Datos maestros`, `Configuración` y `Guía SCM` permanecen como accesos de soporte. No compiten con los procesos diarios en el primer nivel.
+`Datos maestros`, `Configuración` y `Guía SCM` permanecen como accesos de soporte. No compiten con los procesos diarios en el primer nivel. La fuente, estados y ciclo UAT de `/guia/scm` se definen en [[Arquitectura_Guia_SCM_Markdown]].
 
 ## Flujo Canónico de Demanda a Reserva
 
@@ -93,4 +99,3 @@ La arquitectura no depende todavía de autenticación. Cuando se incorporen role
 - Pestañas contextuales: `frontend/src/components/ui/ModuleTabs.jsx`.
 - Hub de catálogos: `frontend/src/components/MasterDataHub.jsx`.
 - Pruebas de resolución: `frontend/src/tests/navigation.spec.js`.
-

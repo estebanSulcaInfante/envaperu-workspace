@@ -5,10 +5,15 @@ fecha: 2026-07-11
 tags: [arquitectura, color, familia-color, normalizacion, dominio]
 relaciones:
   - "[[US-008_Normalizacion_ColorProduccion]]"
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
+  - "[[2026-07-24_Prearmado_Parcial_como_WIP_y_Empaque_Normalizado]]"
 supersede: "[[2026-07-11_Revalorizacion_FamiliaColor_Clave_Receta]]"
 ---
 
 # ADR: Reemplazo del concepto "ColorProducto" por "ColorBase" y "ColorProduccion"
+
+> [!IMPORTANT] Refinamiento posterior de composición
+> Esta decisión sigue vigente para colores. La afirmación de que `ProductoTerminado` agrupa directamente N `PiezaColor` quedó limitada al primer corte: [[2026-07-24_Prearmado_Parcial_como_WIP_y_Empaque_Normalizado]] adopta una estructura multinivel de artículos que puede incluir WIP y termina en hojas `PiezaColor`.
 
 ## Contexto
 

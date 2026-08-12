@@ -15,7 +15,7 @@ fecha_actualizacion: 2026-07-23
 # US-006: Normalizar Composición del Color-Familia
 
 > [!INFO]
-> **Avance 2026-07-23:** el maestro CRUD de familias de color, colores y recetas, la paleta/HEX visual opcional, los estados borrador/aprobada/inactiva y el versionado están implementados según [[../03_Tech_Specs/TS-016_Maestro_Colores_y_Recetas|TS-016]]. La OP excepcional ya aplica la receta, calcula colorantes/aditivos sobre la fracción virgen y congela la referencia y revisión usadas. La autorización humana final permanece como trabajo transversal previo al despliegue multiusuario.
+> **Avance 2026-07-23:** el maestro CRUD de familias de color, colores y recetas, la paleta/HEX visual opcional, los estados borrador/aprobada/inactiva y el versionado están implementados según [[../03_Tech_Specs/TS-016_Maestro_Colores_y_Recetas|TS-016]]. La orden técnica —renombrada OF excepcional por TS-010P— aplica la receta, calcula colorantes/aditivos sobre la fracción virgen y congela la referencia y revisión usadas. La autorización humana final permanece como trabajo transversal previo al despliegue multiusuario.
 
 ## 1. Contexto y Borrador Original
 

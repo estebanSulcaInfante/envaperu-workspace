@@ -1,13 +1,19 @@
 ---
 tipo: tech-spec
-estado: en-revision
+estado: sustituida-parcialmente
 tags: [catalogo, backend, frontend, bom, productos]
 relaciones: 
   - "[[US-003_Creacion_Manual_Producto_Terminado]]"
   - "[[TS-013_Codigos_Correlativos_Automaticos_Catalogo]]"
+  - "[[TS-017A_Sesion_Durable_y_Shell_de_Alta_Guiada]]"
+  - "[[TS-017C_Ingenieria_Readiness_y_Publicacion_Guiada]]"
+fecha_actualizacion: 2026-08-10
 ---
 
 # TS-003: Especificación Técnica - CRUD de Producto Terminado y BOM
+
+> [!IMPORTANT] Contrato sustituido
+> El CRUD de identidad de ProductoTerminado sigue vigente. La BOM plana `ProductoPieza` de esta TS fue sustituida por estructuras revisionadas de TS-010R. TS-017A/C define la nueva alta guiada y no debe enviar el payload `componentes` descrito más abajo.
 
 > [!IMPORTANT] Código automático
 > “Creación manual” describe la construcción interactiva del producto y su BOM, no la escritura del SKU. [[TS-013_Codigos_Correlativos_Automaticos_Catalogo|TS-013]] sustituye `cod_sku_pt` como entrada del alta: el backend asigna `PT-NNNNNN`, lo devuelve al confirmar y lo mantiene inmutable.

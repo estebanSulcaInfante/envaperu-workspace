@@ -7,17 +7,22 @@ relaciones:
   - "[[US-003_Creacion_Manual_Producto_Terminado]]"
   - "[[US-008_Normalizacion_ColorProduccion]]"
   - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
   - "[[Registro_Diario]]"
   - "[[Detalle_Produccion_Hora]]"
   - "[[Orden_Produccion]]"
 fecha_creacion: 2026-07-12
 fecha_implementacion: 2026-07-13
+fecha_actualizacion: 2026-07-24
 ---
 
 # US-009: Normalizar Trabajadores y Máquinas y Actualizar las Vistas de Catálogo
 
 > [!IMPORTANT] Corrección del catálogo de piezas
 > [[TS-012_Normalizacion_Relacion_Molde_Pieza_NM|TS-012]] sustituye cualquier columna o formulario que trate molde, cavidades o peso operativo como atributos del maestro `Pieza`. La vista de piezas administra datos globales; esos valores se consultan y editan en la composición `MoldePieza` de cada molde.
+
+> [!IMPORTANT] Evolución de la BOM
+> Los criterios de esta historia que muestran una BOM exclusivamente plana de `PiezaColor` reflejan el CRUD implementado en ese corte. [[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque|US-010R]] lo evoluciona a `RevisionEstructuraArticulo` para admitir WIP WIP; no se habilitarán dos editores ni dos fuentes de composición.
 
 ## 1. Descripción
 

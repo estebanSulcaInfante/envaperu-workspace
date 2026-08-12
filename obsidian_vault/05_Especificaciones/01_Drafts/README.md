@@ -4,6 +4,7 @@ subtipo: drafts
 estado: activo
 tags: [pipeline, drafts, requerimientos, fabrica]
 fecha_creacion: 2026-06-08
+fecha_actualizacion: 2026-08-11
 ---
 
 # 01_Drafts (Borradores / Requerimientos Crudos)
@@ -21,3 +22,8 @@ Servir como bandeja de entrada (Inbox) para cualquier nueva funcionalidad, repor
 
 ## Próximo Paso en el Pipeline
 Una vez que el requerimiento crudo es analizado, debe estructurarse en una o más historias de usuario con criterios de aceptación claros en [[02_User_Stories/README|02_User_Stories]].
+
+## Refinamientos recientes
+
+- [[Alta_Guiada_Integral_de_ProductoTerminado|Alta guiada integral de ProductoTerminado]] → refinada como familia US-012 / TS-017.
+- [[Kardex_Almacenes_Custodia_Pickup_y_Vistas_Especializadas|Kardex, almacenes, custodia, pickup y vistas especializadas]] → refinada como familia US-013 / TS-018.

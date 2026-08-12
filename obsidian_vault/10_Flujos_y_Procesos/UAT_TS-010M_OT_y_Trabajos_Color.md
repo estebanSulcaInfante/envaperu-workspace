@@ -10,7 +10,7 @@ relaciones:
   - "[[UAT_TS-010C_D_OT_Mangas_Pesaje]]"
   - "[[Alcance_Nuevo_Piloto_SCM_2026-08]]"
 fecha_creacion: 2026-08-08
-fecha_actualizacion: 2026-08-08
+fecha_actualizacion: 2026-08-09
 ---
 
 # UAT TS-010M: OT y Trabajos de color
@@ -54,7 +54,7 @@ con conteo de frontera; esa acción no captura peso ni imprime postetiqueta.
 
 - [x] Baseline automática de backend, PostgreSQL, frontend y estación verde.
 - [x] Migración M aplicada en `envaperu_test` y Supabase; ambos en `f78`.
-- [x] M1-01…08, M2-01…09 y M3-01…09 cubiertos automáticamente en su
+- [x] M1-01…10, M2-01…09 y M3-01…09 cubiertos automáticamente en su
   lógica; la evidencia física permanece en esta UAT.
 - [x] Evidencia PostgreSQL de doble `ANULAR_PESAJE` cerrada.
 - [x] Identidad y capacidades cargan correctamente en `envaperu_test`; smoke
@@ -244,6 +244,37 @@ mutar la manga.
 5. Confirmar que Verde no puede marcarse `COMPLETADO` mientras conserve mangas
    sin resolver.
 
+### UAT-M-14 — Tablero completo por máquina
+
+1. Seleccionar fecha y turno con al menos una OT y varias máquinas activas sin
+   jornada.
+2. Confirmar una tarjeta por cada máquina activa y el resumen total de planta.
+3. En una tarjeta con OT, verificar código/estado, maquinista, color activo,
+   artículo/OF, mangas cerradas/con sticker/pendientes y siguiente color.
+   `PREETIQUETADA` no debe mostrarse como abierta o en llenado.
+4. Confirmar que una máquina sin OT muestra “Sin OT” y no crea registros por
+   el solo hecho de consultarla.
+5. Seleccionar una tarjeta y comprobar que abre el detalle de esa misma OT.
+6. Repetir en móvil y escritorio sin desborde ni pérdida de la acción primaria.
+7. Con dos OT legacy coincidentes en una máquina, confirmar que ambas quedan
+   visibles como conflicto seleccionable y ninguna desaparece por agrupación.
+8. Pausar el único Trabajo de color de una OT que conserve estado agregado
+   `EN_EJECUCION`; la tarjeta debe decir **Pausada**, no **Produciendo**.
+9. Agregar mangas a un color completado, otro pausado y otro planificado;
+   confirmar que la tarjeta cuenta solo las mangas del color pausado que
+   identifica y no suma colores diferentes.
+
+### UAT-M-15 — Lenguaje humano del color
+
+1. Abrir una OF con una sola configuración Verde sólido heredada de PiezaColor.
+2. Confirmar que **Color a fabricar** muestra `VERDE SÓLIDO` como solo lectura y
+   explica su origen.
+3. Confirmar que el formulario no exige entender “corrida” ni `C01`.
+4. Abrir una OF de prueba con dos configuraciones liberadas y confirmar un
+   selector por nombres humanos inequívocos.
+5. Crear el trabajo y verificar que internamente conserva el ID técnico exacto
+   sin permitir color libre o incompatible.
+
 ## 7. Evidencias
 
 Guardar sin secretos ni QR completos:
@@ -257,8 +288,27 @@ UAT-M-AAAA-MM-DD/
 ├── 05-sticker-reemplazado.jpg
 ├── 06-manga-abierta-frontera.png
 ├── 07-anulacion-reversa.png
+├── 08-tablero-diario-maquinas.png
+├── 09-color-humano.png
 └── acta.md
 ```
+
+### Smoke local previo — 2026-08-09
+
+Validación de navegador sobre `envaperu_test`, sin crear ni modificar datos:
+
+- fecha `2026-08-09`: el tablero mostró las dos máquinas activas, ambas con
+  estado **Sin OT** y sin crear jornadas por consultarlas;
+- fecha `2026-08-10`: mostró `OT-000001` únicamente en
+  `MAQ-000002 · Sopladora Alcancía UAT`, conservando también la máquina sin OT;
+- al abrir la tarjeta se seleccionó el detalle de `OT-000001`;
+- el alta mostró **Color a fabricar · VERDE SÓLIDO**, el artículo
+  `Cuerpo Alcancía Pablo Grande VERDE SÓLIDO` y `OF-000001`, sin exponer
+  “corrida” ni `C01`.
+
+Este smoke respalda el corte técnico de M-14/M-15, pero no sustituye la UAT:
+quedan pendientes la matriz móvil/escritorio, 13 máquinas reales, múltiples
+colores liberados y la firma del usuario.
 
 ## 8. Acta
 
@@ -277,10 +327,12 @@ UAT-M-AAAA-MM-DD/
 | UAT-M-11 | PENDIENTE | | |
 | UAT-M-12 | PENDIENTE | | |
 | UAT-M-13 | PENDIENTE | | |
+| UAT-M-14 | PENDIENTE | | |
+| UAT-M-15 | PENDIENTE | | |
 
 ## 9. Criterio de aprobación
 
-La UAT se aprueba cuando M-01…M-13 pasan, no existen defectos P0/P1, cada
+La UAT se aprueba cuando M-01…M-15 pasan, no existen defectos P0/P1, cada
 diferencia de sticker/cupo queda explicada, ninguna identidad fue borrada y la
 regresión C/D/I permanece verde. Solo entonces cambia a
 `aprobada-para-marcha-blanca`.

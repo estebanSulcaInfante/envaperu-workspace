@@ -7,8 +7,10 @@ relaciones:
   - "[[US-011A_Dashboard_Gerencial_Avance_Pesajes]]"
   - "[[US-011B_Importar_Historial_y_Consultar_OP_Legacy]]"
   - "[[US-010_Trazabilidad_End_to_End_SCM]]"
+  - "[[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion]]"
   - "[[TS-TE-004_Despliegue_y_Comunicacion_Estacion_Pesaje]]"
 fecha_creacion: 2026-07-18
+fecha_actualizacion: 2026-07-23
 ---
 
 # US-011C: Continuidad y Operación Auditada de Pesajes del Piloto
@@ -88,6 +90,8 @@ No incluye:
 10. La caída de central no impide pesar ni imprimir.
 11. Ninguna operación de esta historia escribe en `ControlPeso` ni inventario.
 12. `remote_hardware_commands` permanece `false`; `pilot_data_commands` es una capacidad distinta.
+13. Un `VOID_CAPTURE` aplicado después del umbral configurable desde el pesaje
+    genera una alerta central; la fila original permanece visible y auditable.
 
 ## 6. Estados visibles
 
@@ -202,4 +206,4 @@ No se debe actualizar primero la estación: requiere que central anuncie `statio
 
 ## 12. Deuda deliberada
 
-US-010D reemplazará esta continuidad basada en IDs locales por eventos globales asociados a `LoteSalidaPiezaColor` y unidad logística. La autenticación final reemplazará el actor escrito manualmente por la identidad de sesión, sin perder el historial generado durante el piloto.
+[[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion|US-010D]] reemplazará esta continuidad basada en IDs locales por eventos globales asociados a `LoteSalidaPiezaColor` y unidad logística. La autenticación final reemplazará el actor escrito manualmente por la identidad de sesión, sin perder el historial generado durante el piloto.

@@ -4,7 +4,7 @@ tabla: snapshot_composicion_molde
 estado: activo
 tags: [dominio, snapshot, molde, multipieza]
 relaciones_padre:
-  - "[[Orden_Produccion]]"
+  - "[[Orden_Fabricacion]]"
 fecha_creacion: 2026-04-21
 fecha_actualizacion: 2026-07-22
 ---
@@ -21,7 +21,7 @@ Un molde puede producir distintos tipos de piezas simultáneamente (molde multi-
 | Atributo | Tipo | Descripción |
 | :--- | :--- | :--- |
 | **id** | Auto (BD) | Primary Key. |
-| **orden_id** | FK | Referencia al `numero_op` de la [[Orden_Produccion]] padre. |
+| **orden_id** | FK legacy | Referencia al código técnico migrado a [[Orden_Fabricacion]]; el contrato objetivo usa `orden_operacion_id`. |
 | **pieza_id** | FK a `Pieza` (nullable transitorio) | Identidad canónica de la forma abstracta. Las OP nuevas deben informarla; la nulabilidad existe solo para importar y diagnosticar snapshots legacy aún no conciliados. |
 | **pieza_codigo_snapshot** | Snapshot | Código de la pieza congelado al crear o reconciliar la OP. No cambia si después se edita el catálogo. |
 | **pieza_nombre_snapshot** | Snapshot | Nombre legible de la pieza congelado para conservar la historia. |
@@ -58,5 +58,5 @@ La primera OP legacy real o su restore anonimizado debe seguir el checklist de [
 ```
 
 ## Relaciones
-- **Padre:** [[Orden_Produccion]] (N:1)
+- **Padre:** [[Orden_Fabricacion]] (N:1)
 - **FK canónica:** `Pieza` (catálogo de formas abstractas; nullable solo durante la transición legacy)

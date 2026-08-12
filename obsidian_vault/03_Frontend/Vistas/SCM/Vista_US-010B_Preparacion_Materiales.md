@@ -1,26 +1,39 @@
 ---
 tipo: vista-frontend
-estado: mock
-fuente_datos: mock
+estado: implementado-local-pendiente-uat
+fuente_datos: api-scm
 tags: [frontend, scm, materiales, reserva, emision, premezcla, us-010b]
 relaciones:
   - "[[US-010B_Reserva_Emision_Materiales_OP]]"
+  - "[[US-010L_Material_Segunda_Reproceso_y_Mezcla_Preparada_Trazable]]"
   - "[[US-010A_Recepcion_Trazable_Materiales]]"
   - "[[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]]"
   - "[[Vista_US-010P_Planificacion_Demanda_OP]]"
   - "[[SCM_Frontend_Overview_US-010]]"
   - "[[Patron_Capacidades_API_y_Mocks]]"
 fecha_creacion: 2026-07-15
-fecha_actualizacion: 2026-07-21
+fecha_actualizacion: 2026-08-08
 ---
 
 # Vista US-010B — Preparación de Materiales
 
 ## Estado Actual
 
-Mock funcional de lectura basado en el contrato de [[US-010B_Reserva_Emision_Materiales_OP]]. Permite recorrer el estado futuro del flujo; no persiste reserva, emisión, devolución ni premezcla.
+Vista transaccional conectada a la API SCM. Consulta corridas de OF y persiste
+generación de requerimientos, reserva, emisión, devolución y premezcla. Los
+fixtures se conservan únicamente para pruebas de componente.
 
-El fixture actual comienza con una OP ya preparada. La creación de demanda, la explosión de BOM y la generación/liberación de esa OP no estaban representadas; esa laguna queda delimitada por [[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]] y [[Vista_US-010P_Planificacion_Demanda_OP]].
+> [!WARNING] No es todavía una estación de dosificación
+> La vista no escucha una balanza de materiales ni captura bruto, tara, neto,
+> dosis, iteraciones o incorporación física. La acción vigente consume todos los
+> saldos emitidos disponibles y muestra una salida derivada. No debe usarse para
+> validar preparación experimental. La evolución se define en
+> [[US-010L_Material_Segunda_Reproceso_y_Mezcla_Preparada_Trazable|US-010L]].
+
+El fixture actual comienza con una orden técnica ya preparada, ahora denominada
+OF. La creación de OP de demanda, explosión de BOM y generación/liberación de
+esa OF pertenecen a [[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]]
+y [[Vista_US-010P_Planificacion_Demanda_OP]].
 
 ## Implementación
 
@@ -29,12 +42,13 @@ El fixture actual comienza con una OP ya preparada. La creación de demanda, la 
 | Rutas | `/materiales/preparaciones` y `/materiales/preparaciones/:numeroOp`; `/ordenes/:numeroOp/materiales` queda como alias |
 | Vista | `frontend/src/components/PreparacionMateriales.jsx` |
 | Adaptador | `frontend/src/services/preparacionMateriales.js` |
-| Fixtures | `frontend/src/mocks/preparacionMateriales.js` |
+| Fuente operativa | `GET /api/scm/v1/materiales-ejecucion` |
+| Fixtures de prueba | `frontend/src/mocks/preparacionMateriales.js` |
 | Pruebas | `frontend/src/tests/PreparacionMateriales.spec.jsx` |
 
 ## Estructura Visible
 
-- selector de OP y lote de producción;
+- selector de OF y corrida;
 - resumen de receta congelada, cobertura de reserva y emisión;
 - etapa `Plan`: cantidades planificadas, reservadas, emitidas, preparadas y enviadas a máquina;
 - etapa `Reserva`: lotes internos, proveedor, estado del lote externo, ubicación MP, Calidad, disponibilidad y asignación;
@@ -44,24 +58,25 @@ El fixture actual comienza con una OP ya preparada. La creación de demanda, la 
 
 ## Punto de Entrada Objetivo
 
-1. US-010P crea una OP en borrador desde una demanda o registra una OP manual justificada.
+1. US-010P crea una OP de demanda y propone una OF, o registra una OF excepcional justificada.
 2. Producción completa su configuración técnica.
 3. Un usuario autorizado ejecuta `Liberar y calcular materiales`.
 4. US-010P libera la revisión y US-010B calcula requerimientos una sola vez; entonces abastecimiento cambia a `REQUERIDO`.
 5. La acción `Preparar materiales` abre `/materiales/preparaciones/:numeroOp`.
 6. US-010B propone lotes físicos y recién `Confirmar reserva` compromete sus cantidades.
 
-Una OP `BORRADOR` o `PLANIFICADA` debe mostrar el bloqueo y regresar a configuración; no puede comenzar una reserva.
+Una OF `BORRADOR` o `PROGRAMADA` sin liberar debe mostrar el bloqueo y regresar a configuración; no puede comenzar una reserva.
 
 ## Capacidades
 
 | Capacidad | Lectura actual | Escritura actual |
 | :--- | :--- | :--- |
-| Consultar preparación | `MOCK` | No aplica |
-| Confirmar reserva | Datos visibles | Bloqueada con candado: API pendiente |
-| Emitir material | Datos visibles | Bloqueada con candado: API pendiente |
-| Registrar devolución | Datos visibles | Bloqueada con candado: API pendiente |
-| Confirmar premezcla | Datos visibles | Bloqueada con candado: API pendiente |
+| Consultar preparación | API SCM | No aplica |
+| Generar requerimientos | API SCM | `MATERIAL_REQUERIMIENTO_GENERAR` |
+| Confirmar reserva | API SCM | `MATERIAL_RESERVAR` |
+| Emitir material | API SCM | `MATERIAL_EMITIR` |
+| Registrar devolución | API SCM | `MATERIAL_DEVOLVER` |
+| Confirmar premezcla | API SCM | `MATERIAL_PREMEZCLA_CONFIRMAR` |
 
 El patrón de presentación se define en [[Patron_Capacidades_API_y_Mocks]].
 
@@ -73,9 +88,12 @@ Por eso, US-010A está contemplada como dependencia y frontera de datos, pero no
 
 ## Contrato Consumido de US-010P
 
-La vista requiere una OP `LIBERADA` con lote de producción, ciclos/salidas, receta congelada y requerimientos absolutos. No calcula la demanda de `ProductoTerminado` ni decide qué OP deben existir.
+La vista requiere una OF `LIBERADA` con corrida, ciclos/salidas, receta
+congelada y requerimientos absolutos. No calcula demanda de
+`ProductoTerminado` ni decide qué OP/OF/OA deben existir.
 
-El mock mantiene temporalmente ese contrato como fixture. La integración futura debe impedir el acceso mutador cuando la OP no esté liberada o cuando los requerimientos no correspondan a su revisión vigente.
+La API rechaza la generación cuando la OF no se encuentra liberada/programada
+para ejecución o cuando no existe una receta aprobada y resoluble.
 
 ## Cobertura Actual
 
@@ -84,10 +102,13 @@ Las pruebas de componente verifican:
 - carga y navegación básica de la preparación;
 - cálculo visible de colorante sobre la base virgen (`MAT-02`);
 - genealogía de una premezcla (`MAT-29`);
-- comandos de inventario deshabilitados mientras su API no esté disponible.
+- diálogo de devolución con cantidad y motivo;
+- transformación de premezcla con advertencia irreversible y genealogía.
 
 La siguiente iteración debe cubrir `MAT-31` y mostrar una advertencia explícita cuando la salida de tolva solo conserve un `CONJUNTO_CANDIDATOS`; no debe renderizar cantidades o porcentajes por proveedor.
 
 ## Próximo Cambio de Madurez
 
-La vista pasa de `mock` a `api-parcial` cuando el adaptador pueda consultar contratos reales y cada comando integrado cubra autorización, validación de estado, idempotencia, errores de negocio y pruebas de integración. No es necesario esperar ese momento para continuar el diseño de US-010A.
+Ejecutar [[UAT_US-010B_Reserva_Emision_Premezcla]] con usuarios de Producción y
+Almacén. La vista no está autorizada todavía para despliegue y no toca la base
+de datos desplegada.

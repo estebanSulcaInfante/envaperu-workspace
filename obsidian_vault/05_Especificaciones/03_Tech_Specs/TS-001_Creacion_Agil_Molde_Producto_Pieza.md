@@ -3,7 +3,7 @@ tipo: tech_spec
 id: TS-001
 titulo: "Creación Ágil de Molde-Producto-Pieza — Especificación Técnica"
 user_story: "[[02_User_Stories/US-001_Creacion_Agil_Molde_Producto_Pieza]]"
-estado: draft
+estado: sustituida-parcialmente
 tags:
   - catalogo
   - molde
@@ -13,13 +13,20 @@ tags:
   - normalizacion
   - config-rapida
 fecha_creacion: 2026-06-27
+fecha_actualizacion: 2026-08-10
 relaciones:
   - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
   - "[[TS-013_Codigos_Correlativos_Automaticos_Catalogo]]"
   - "[[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD]]"
+  - "[[US-007_Normalizar_ProductoTerminado_PiezaColor_Salidas_OP]]"
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
+  - "[[TS-017B_Configuracion_Fisica_Formulaciones_y_UX_Premium]]"
 ---
 
 # TS-001: Creación Ágil de Molde-Producto-Pieza
+
+> [!IMPORTANT] Sucesión técnica
+> [[TS-017B_Configuracion_Fisica_Formulaciones_y_UX_Premium|TS-017B]] consume las reglas físicas vigentes dentro de una sesión durable. No debe reactivarse el diseño de cuatro pasos, la clasificación comercial copiada a Pieza, KIT ni BOM plano descritos históricamente aquí.
 
 > Especificación Técnica derivada de [[02_User_Stories/US-001_Creacion_Agil_Molde_Producto_Pieza|US-001]].
 
@@ -31,6 +38,9 @@ relaciones:
 
 > [!IMPORTANT] Clasificación Línea-Familia sustituida
 > [[TS-014_Normalizacion_Linea_Familia_NM_y_CRUD|TS-014]] sustituye D2 y cualquier mapeo exclusivo del frontend. `Linea` y `Familia` tienen CRUD lógico/versionado y se relacionan N:M mediante `LineaFamilia`; todo producto, pieza o variante clasificada debe usar un par activo.
+
+> [!IMPORTANT] Modelo KIT sustituido
+> Cualquier diseño de esta especificación basado en `PiezaColor.tipo=KIT` o `PiezaComponente` es histórico y no autoriza nuevas altas. [[US-007_Normalizar_ProductoTerminado_PiezaColor_Salidas_OP|US-007]] gobierna `ProductoTerminado`; [[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque|US-010R]] gobierna estructuras multinivel, rutas y WIP WIP. Al no existir datos operativos legacy, la futura Tech Spec de US-010R debe verificar tablas vacías y abortar ante filas inesperadas, no fabricar una migración de genealogía.
 
 ---
 

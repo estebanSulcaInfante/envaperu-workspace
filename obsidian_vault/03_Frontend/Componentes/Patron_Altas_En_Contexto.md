@@ -3,9 +3,10 @@ tipo: patron_frontend
 estado: en-desarrollo
 tags: [frontend, formularios, autocomplete, modal, catalogos, ux]
 fecha_creacion: 2026-07-22
-fecha_actualizacion: 2026-07-22
+fecha_actualizacion: 2026-08-10
 relaciones:
   - "[[../../05_Especificaciones/03_Tech_Specs/TS-015_Asistente_Catalogo_Altas_En_Contexto_y_OP_Excepcional]]"
+  - "[[../../05_Especificaciones/03_Tech_Specs/TS-017A_Sesion_Durable_y_Shell_de_Alta_Guiada]]"
 ---
 
 # Patrón — Altas en contexto desde selectores
@@ -29,6 +30,8 @@ Cancelar no ejecuta escrituras. Los errores se muestran dentro del modal y el do
 ## Cuándo usarlo
 
 Es apropiado para catálogos compactos, como Color, Línea o Familia. Una Familia creada desde una Línea también debe crear explícitamente la asociación `LineaFamilia`.
+
+En el alta guiada integral no se ofrece **Crear Familia** hasta que exista una Línea activa. Confirmar usa `POST /api/catalogo/lineas/{linea_id}/familias` con el objeto `familia`: crea o reactiva `Familia + LineaFamilia` atómicamente, refresca el selector filtrado y selecciona el ID devuelto. Dentro de este flujo está prohibido `POST /api/catalogo/familias`. Una Familia creada pero no asociada se considera un fallo de la operación, no un éxito parcial que el usuario deba reparar en otra vista.
 
 No debe usarse para ocultar maestros complejos. Molde, composición `MoldePieza`, PiezaColor y ProductoTerminado con BOM requieren su formulario completo o la Configuración guiada. Una Pieza puede crearse en contexto solo cuando el modal recoge también su peso, Línea y Familia y la asocia al molde en una única operación válida.
 

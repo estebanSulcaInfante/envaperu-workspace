@@ -1,39 +1,66 @@
 ---
 tipo: user-story
 subtipo: historia-hija
-estado: en-refinamiento
+estado: implementado-piloto-local-pendiente-uat
 epica: "[[US-010_Trazabilidad_End_to_End_SCM]]"
 tags: [scm, trazabilidad, materiales, reserva, emision, premezcla, produccion, lotes, atdd, tdd]
 relaciones:
   - "[[US-010_Trazabilidad_End_to_End_SCM]]"
   - "[[US-010A_Recepcion_Trazable_Materiales]]"
+  - "[[US-010L_Material_Segunda_Reproceso_y_Mezcla_Preparada_Trazable]]"
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
   - "[[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]]"
+  - "[[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas]]"
+  - "[[US-010M_OT_de_Maquina_y_Trabajo_de_Color]]"
+  - "[[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion]]"
   - "[[Vista_US-010B_Preparacion_Materiales]]"
-  - "[[Orden_Produccion]]"
+  - "[[Orden_Fabricacion]]"
+  - "[[2026-07-29_Separacion_OP_OF_OA_OT_y_Cobertura_NM]]"
   - "[[Lote_Color]]"
   - "[[Composicion_Materiales]]"
   - "[[Receta_Colorantes]]"
+  - "[[2026-08-03_Alcance_Piloto_Apertura_Inicial_sin_Recepcion_Compras]]"
 fecha_creacion: 2026-07-15
-fecha_actualizacion: 2026-07-21
+fecha_actualizacion: 2026-08-08
 ---
 
-# US-010B: Reserva, Emisión y Premezcla Trazable de Materiales para una OP
+# US-010B: Reserva, Emisión y Premezcla Trazable de Materiales para una OF
+
+> [!SUCCESS] Incremento transaccional local — 2026-08-03
+> `/materiales/preparaciones` consume la API SCM y permite generar
+> requerimientos, reservar saldos de apertura, emitir, devolver y confirmar una
+> premezcla trazable. La migración se aplicó únicamente a PostgreSQL local. La
+> historia permanece pendiente de UAT operativa y no autoriza despliegue.
+
+> [!WARNING] Brecha de autoridad física — 2026-08-08
+> La implementación local confirma la premezcla consumiendo automáticamente el
+> saldo `emitido - devuelto - consumido` y deriva la salida como suma de esos
+> saldos. No captura todavía incorporaciones reales, bruto/tara/neto, dispositivo
+> ni pérdidas. Esta simplificación no cubre preparación experimental ni permite
+> una UAT física de dosificación. La extensión y sus criterios están en
+> [[US-010L_Material_Segunda_Reproceso_y_Mezcla_Preparada_Trazable|US-010L]].
+
+> [!IMPORTANT] Terminología vigente
+> Esta historia recibe una [[Orden_Fabricacion|OF]] liberada. Las menciones
+> históricas a OP técnica, `OrdenProduccion` o `orden_id` se mantienen solo en
+> contratos legacy durante la migración; la [[Orden_Produccion|OP]] de demanda
+> no reserva materia prima directamente.
 
 ## 1. Decisión de Alcance
 
-Esta historia comienza cuando [[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]] entrega una OP `LIBERADA`, con uno o más lotes de producción, ciclos/salidas planificados y una revisión técnica y de receta congelada. Termina cuando Producción conoce qué cantidades de qué lotes físicos están reservadas, cuáles fueron emitidas desde el almacén de materias primas y, cuando se prepara resina ya coloreada antes de alimentar la máquina, qué inputs formaron cada lote de premezcla.
+Esta historia comienza cuando [[US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]] entrega una OF `LIBERADA`, con una o más corridas, ciclos/salidas planificados y una revisión técnica y de receta congelada. Termina cuando Producción conoce qué cantidades de qué lotes físicos están reservadas, cuáles fueron emitidas desde el almacén de materias primas y, cuando se prepara resina ya coloreada antes de alimentar la máquina, qué inputs formaron cada lote de premezcla.
 
-US-010B no decide cuántos `ProductoTerminado` fabricar, no explota su BOM y no crea la OP técnica. Su primera acción sobre una OP liberada es generar requerimientos absolutos; después propone lotes físicos. La reserva comienza únicamente cuando un usuario autorizado confirma esa propuesta.
+US-010B no decide cuántos `ProductoTerminado` fabricar, no explota su BOM y no crea la OF técnica. Su primera acción sobre una OF liberada es generar requerimientos absolutos; después propone lotes físicos. La reserva comienza únicamente cuando un usuario autorizado confirma esa propuesta.
 
 US-010B separa explícitamente:
 
-1. **Planificado:** lo que indica la receta congelada de la OP.
-2. **Reservado:** cantidad comprometida para la OP, todavía físicamente en almacén.
+1. **Planificado:** lo que indica la receta congelada de la OF/corrida.
+2. **Reservado:** cantidad comprometida para la OF, todavía físicamente en almacén.
 3. **Emitido a Producción:** cantidad identificada que se movió a preparación o pie de máquina.
 4. **Devuelto:** cantidad emitida que retorna conservando identidad y aptitud.
 5. **Consumido en preparación:** cantidad emitida incorporada realmente a una premezcla y que ya no puede devolverse como componente separado.
 6. **Lote de premezcla:** resina ya coloreada obtenida de inputs identificados y disponible como WIP para una corrida.
-7. **Consumido en máquina:** cantidad que la corrida de inyección o soplado confirma como entrada real; corresponde a US-010C.
+7. **Consumido en máquina:** cantidad que la corrida de inyección o soplado confirma como entrada real; corresponde a [[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas|US-010C]].
 
 Emitir material no equivale a consumirlo. La salida de almacén cambia ubicación y compromiso, pero no destruye existencia física. La confirmación de una premezcla sí consume sus inputs y crea otra identidad trazable; todavía no demuestra que esa premezcla entró a la máquina.
 
@@ -41,7 +68,7 @@ Emitir material no equivale a consumirlo. La salida de almacén cambia ubicació
 
 La ficha [[Validacion_Operativa_US-010A]] no es requisito para redactar estos escenarios ni para probar el núcleo de reserva.
 
-US-010B se prueba contra contratos de inventario y OP liberada con fixtures sintéticos. No necesita conocer:
+US-010B se prueba contra contratos de inventario y OF liberada con fixtures sintéticos. No necesita conocer:
 
 - nombres reales de racks, silos o responsables;
 - valores productivos de tolerancia de recepción;
@@ -57,15 +84,15 @@ Sí necesita que el contrato de US-010A garantice, aunque todavía sea mediante 
 - ubicación compatible con materias primas;
 - versión o mecanismo de concurrencia para no reservar dos veces el mismo saldo.
 
-También necesita que el contrato de US-010P garantice, aunque todavía sea mediante una OP fixture:
+También necesita que el contrato de US-010P garantice, aunque todavía sea mediante una OF fixture:
 
-- OP en estado `LIBERADA` y revisión estable;
+- OF en estado `LIBERADA` y revisión estable;
 - lote de producción y `ColorProduccion` identificados;
 - ciclos, salidas `PiezaColor` y kg netos derivados;
 - receta y base de dosificación congeladas;
 - clave idempotente para generar requerimientos una sola vez.
 
-US-010B puede refinarse y desarrollar su dominio antes de integrar US-010A o implementar el frontend de US-010P. No puede completar su E2E ni liberarse a operación hasta recibir inventario real de US-010A y una revisión de OP liberada mediante el contrato de US-010P o un adaptador legacy formalmente conciliado.
+US-010B puede refinarse y desarrollar su dominio antes de integrar US-010A o implementar el frontend de US-010P. Para el nuevo piloto puede consumir inventario real nacido de un lote de `APERTURA_INICIAL` aprobado; no requiere fingir una recepción de compra. No puede completar su E2E ni liberarse a operación hasta recibir saldos reales del Kardex y una revisión de OF liberada mediante el contrato de US-010P.
 
 ## 3. Historia de Usuario
 
@@ -79,18 +106,18 @@ Al completar esta historia:
 
 1. Cada lote de producción muestra requerimiento planificado, reservado, emitido, consumido en preparación, WIP resultante, devuelto y pendiente por material.
 2. Cada reserva identifica cantidades concretas de uno o varios `LoteMaterial`.
-3. Dos OP no pueden comprometer la misma cantidad disponible.
+3. Dos OF no pueden comprometer la misma cantidad disponible.
 4. Almacén no puede emitir material pendiente, bloqueado, rechazado o retenido.
 5. La emisión conserva lote, cantidad, origen, destino, balanza cuando exista, trabajador y momento.
 6. El stock físico no se reduce por reservar y tampoco se declara consumido por emitir.
 7. Cada premezcla conserva su propia identidad y declara procedencia `EXACTA` cuando conoce lotes/cantidades o `CONJUNTO_CANDIDATOS` cuando la tolva perdió esa granularidad.
-8. US-010C puede tomar un lote de premezcla o, si una receta excepcional no la usa, cantidades emitidas identificadas, y confirmar cuáles entraron realmente a la corrida.
+8. [[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas|US-010C]] puede tomar un lote de premezcla o, si una receta excepcional no la usa, cantidades emitidas identificadas, y confirmar cuáles entraron realmente a la corrida.
 
 ## 5. Lenguaje de Dominio
 
 ### 5.1. Lote de producción
 
-Segmento ejecutable de una OP para un color y una receta congelada. Evoluciona conceptualmente el `LoteColor` actual sin asumir que su tabla deba renombrarse en esta historia.
+Segmento ejecutable de una OF para un color y una receta congelada. Evoluciona conceptualmente el `LoteColor` actual hacia `CorridaFabricacion` sin asumir que su tabla deba renombrarse en esta historia.
 
 ### 5.2. Requerimiento de material
 
@@ -182,7 +209,7 @@ La reserva utiliza una revisión congelada de receta. Cambiar posteriormente el 
 
 ### 7.2. Materiales con identidad estable
 
-La OP selecciona definiciones existentes. No puede crear `MateriaPrima` o `Colorante` por nombre libre durante su guardado, como ocurre actualmente en `rutas_produccion.py`.
+La OF selecciona definiciones existentes. No puede crear `MateriaPrima` o `Colorante` por nombre libre durante su guardado, como ocurre actualmente en `rutas_produccion.py`.
 
 ### 7.3. Cantidad absoluta resoluble
 
@@ -250,12 +277,12 @@ El balance de masa de la premezcla pertenece a esta historia; el balance de la t
 13. La cantidad emitida de una reserva no puede superar su saldo reservado no emitido.
 14. La devolución no puede superar la cantidad emitida aún no consumida ni devuelta.
 15. Material mezclado o cuya identidad se perdió no puede regresar al lote original mediante una devolución simple.
-16. Una devolución identificada restaura por defecto el saldo no emitido de la misma reserva; liberarlo para otras OP requiere una acción explícita.
+16. Una devolución identificada restaura por defecto el saldo no emitido de la misma reserva; liberarlo para otras OF requiere una acción explícita.
 17. Liberar una reserva devuelve a disponibilidad únicamente su saldo no emitido.
-18. Cancelar o cerrar una OP no devuelve físicamente material emitido; requiere devolución, transformación o disposición explícita.
-19. Reabrir una OP no recrea reservas canceladas.
+18. Cancelar o cerrar una OF no devuelve físicamente material emitido; requiere devolución, transformación o disposición explícita.
+19. Reabrir una OF no recrea reservas canceladas.
 20. Si Calidad bloquea un lote después de reservarlo, se impiden nuevas emisiones y la reserva queda en incidencia; no se borra.
-21. Si el lote ya fue emitido cuando se bloquea, se genera una alerta de contención vinculada a la OP y ubicación actual.
+21. Si el lote ya fue emitido cuando se bloquea, se genera una alerta de contención vinculada a la OF y ubicación actual.
 22. Una corrección de recepción no puede reducir el lote por debajo de cantidades reservadas o emitidas sin resolver su impacto.
 23. Todo comando confirmado posee clave idempotente; repetirla con el mismo contenido retorna el mismo resultado.
 24. Repetir una clave con contenido distinto produce conflicto y no cambia saldos.
@@ -263,9 +290,9 @@ El balance de masa de la premezcla pertenece a esta historia; el balance de la t
 26. Cantidades de inventario se normalizan a kg con tres decimales; las conversiones conservan precisión suficiente antes del redondeo final.
 27. FEFO no se aplica mientras no existan fechas de vencimiento o reanálisis confiables. Una política automática puede usar FIFO u otra estrategia aprobada, pero queda versionada.
 28. Una selección manual fuera de la estrategia sugerida registra motivo cuando la política lo exige.
-29. Una OP o lote de producción en estado no habilitado no admite nuevas reservas ni emisiones.
+29. Una OF o corrida en estado no habilitado no admite nuevas reservas ni emisiones.
 30. Origen y destino de la emisión deben ser ubicaciones activas y compatibles con materias primas/WIP.
-31. Todo evento registra actor autenticado, trabajador cuando corresponda, momento, origen, destino, motivo y referencia a OP/lote de producción.
+31. Todo evento registra actor autenticado, trabajador cuando corresponda, momento, origen, destino, motivo y referencia a OF/corrida.
 32. La dosis de colorante se calcula exclusivamente sobre los kg de material virgen declarados como base de dosificación.
 33. Agregar material de segunda, tanto recuperado internamente como comprado, no aumenta por sí mismo el requerimiento de colorante.
 34. Una emisión continúa sin consumirse hasta que una preparación o una corrida confirme la cantidad realmente incorporada.
@@ -278,12 +305,12 @@ El balance de masa de la premezcla pertenece a esta historia; el balance de la t
 
 ### 9.1. Generar requerimientos
 
-1. Recibir una OP `LIBERADA` y la revisión técnica congelada por US-010P.
+1. Recibir una OF `LIBERADA` y la revisión técnica congelada por US-010P.
 2. Verificar la receta, sus bases de dosificación, ciclos, salidas y kg derivados.
 3. Resolver cada línea a cantidad absoluta y unidad base, o reutilizar el resultado idempotente de la liberación.
 4. Rechazar fórmulas ambiguas, materiales inactivos o cantidades no positivas.
 5. Mostrar plan por material y diferencia contra reservas existentes.
-6. No habilitar propuesta o confirmación de reserva para una OP `BORRADOR` o `PLANIFICADA`.
+6. No habilitar propuesta o confirmación de reserva para una OF `BORRADOR` o `PROGRAMADA`.
 
 ### 9.2. Proponer lotes
 
@@ -305,7 +332,7 @@ El balance de masa de la premezcla pertenece a esta historia; el balance de la t
 1. Escanear o seleccionar el lote reservado.
 2. Registrar cantidad medida, unidad original y balanza cuando exista.
 3. Seleccionar destino compatible de preparación o máquina.
-4. Validar saldo reservado, Calidad, retenciones y estado de la OP.
+4. Validar saldo reservado, Calidad, retenciones y estado de la OF.
 5. Registrar movimiento físico y vínculo con requerimiento/reserva.
 6. Mantener la cantidad como emitida no consumida hasta una devolución, una `PreparacionMezcla` o una transformación directa confirmada por US-010C.
 
@@ -323,7 +350,7 @@ El balance de masa de la premezcla pertenece a esta historia; el balance de la t
 1. Seleccionar una emisión con saldo no consumido.
 2. Confirmar que el material conserva identidad y aptitud.
 3. Registrar cantidad, origen de Producción y destino de materias primas.
-4. Restaurar la cantidad al saldo no emitido de la misma reserva; liberarla para otras OP requiere una acción explícita.
+4. Restaurar la cantidad al saldo no emitido de la misma reserva; liberarla para otras OF requiere una acción explícita.
 5. Si el material está mezclado, contaminado o sin identidad, derivar a premezcla/WIP, bloqueo o disposición; no devolver al lote original.
 
 ### 9.7. Liberar o cancelar reserva
@@ -341,7 +368,7 @@ Este dataset no pretende ser la configuración real de EnvaPerú.
 
 | Dato | Valor de prueba |
 |---|---|
-| OP | `OP-B-TEST-001` |
+| OF | `OF-B-TEST-001` |
 | Lote producción | `LP-B-ROJO-001` |
 | Revisión receta | `REC-TEST-R1` |
 | PP virgen | `MAT-PP-V`, `70.000 kg` |
@@ -465,7 +492,7 @@ El lote bloqueado y el lote retenido nunca participan, aunque tengan existencia 
 
 **Dado** `20.000 kg` reservados de `LM-PP-B`  
 **Cuando** Almacén emite `20.000 kg` hacia `UBI-PROD-PREP`  
-**Entonces** se registra origen, destino, lote, OP, actor y cantidad  
+**Entonces** se registra origen, destino, lote, OF, actor y cantidad<br>
 **Y** esa cantidad queda emitida no consumida para `LP-B-ROJO-001`.
 
 ### MAT-14: Impedir emitir más de lo reservado
@@ -489,7 +516,7 @@ El lote bloqueado y el lote retenido nunca participan, aunque tengan existencia 
 **Y** que `2.000 kg` permanecen identificados, no mezclados y aptos  
 **Cuando** se confirma su devolución a una ubicación compatible  
 **Entonces** quedan `18.000 kg` emitidos netos  
-**Y** `2.000 kg` regresan como saldo reservado no emitido de la misma OP  
+**Y** `2.000 kg` regresan como saldo reservado no emitido de la misma OF<br>
 **Y** no quedan disponibles para otra orden hasta liberar expresamente esa reserva.
 
 ### MAT-17: Impedir devolver una mezcla como lote original
@@ -506,10 +533,10 @@ El lote bloqueado y el lote retenido nunca participan, aunque tengan existencia 
 **Entonces** solo `8.000 kg` vuelven a disponibilidad  
 **Y** los `12.000 kg` emitidos permanecen asignados y visibles.
 
-### MAT-19: Cancelar una OP no devuelve material físicamente
+### MAT-19: Cancelar una OF no devuelve material físicamente
 
-**Dado** una OP con reservas no emitidas y material ya emitido  
-**Cuando** se cancela la OP  
+**Dado** una OF con reservas no emitidas y material ya emitido<br>
+**Cuando** se cancela la OF<br>
 **Entonces** se liberan las reservas no emitidas  
 **Y** el material emitido queda pendiente de devolución, transformación o disposición explícita.
 
@@ -524,7 +551,7 @@ El lote bloqueado y el lote retenido nunca participan, aunque tengan existencia 
 
 **Dado** material ya emitido a Producción  
 **Cuando** su lote de origen pasa a `BLOQUEADO`  
-**Entonces** se genera una alerta de contención para la OP y ubicación actual  
+**Entonces** se genera una alerta de contención para la OF y ubicación actual<br>
 **Y** no se borra ni devuelve automáticamente la emisión.
 
 ### MAT-22: Preservar una revisión de receta
@@ -620,7 +647,7 @@ Debe permitir comparar por material:
 
 ### 12.2. Selección de lotes
 
-Debe mostrar solo candidatos compatibles y explicar por qué otros no pueden utilizarse: Calidad, retención, ubicación, saldo, material o estado de OP.
+Debe mostrar solo candidatos compatibles y explicar por qué otros no pueden utilizarse: Calidad, retención, ubicación, saldo, material o estado de OF.
 
 ### 12.3. Emisión y devolución
 
@@ -643,7 +670,7 @@ Debe permitir seleccionar únicamente emisiones con saldo, capturar cantidades i
 | `IDENTIDAD_NO_PRESERVADA` | El material no puede devolverse al lote original. |
 | `BASE_DOSIFICACION_INVALIDA` | La dosis no declara o contradice la base de `25 kg` de virgen. |
 | `INPUT_MEZCLA_NO_DISPONIBLE` | La cantidad a incorporar no está emitida o ya fue devuelta/consumida. |
-| `OP_NO_HABILITADA` | El estado de OP/lote no permite la acción. |
+| `OF_NO_HABILITADA` | El estado de OF/corrida no permite la acción. |
 | `CLAVE_REUTILIZADA` | La clave idempotente ya existe con otro contenido. |
 
 Los nombres HTTP y la estructura de respuesta pertenecen a la futura Tech Spec.
@@ -666,9 +693,13 @@ Estas decisiones ya son reglas de aceptación. No deben reabrirse implícitament
 2. ¿La selección usual es manual, FIFO por recepción u otra regla?
 3. ¿Se permite reservar una cantidad de contingencia superior al plan? ¿Con qué autorización?
 4. ¿Cuántas bolsas suelen formar una tanda y cómo se identifica físicamente la salida de la tolva?
-5. ¿Durante la preparación se pesan resina, recuperado, masterbatch o aditivos, o solo se usa conteo/dosificación manual? La balanza de recepción de segunda no se supone automáticamente como balanza de mezcla.
+5. US-010L fija que todo material incorporado —resina, recuperado,
+   masterbatch/pigmento o aditivo— debe conservar cantidad real medida o una
+   unidad completa previamente verificada. Quedan por levantar balanza, rango,
+   resolución, método y tolerancia por componente; la balanza de recepción de
+   segunda no se supone automáticamente como balanza de mezcla.
 6. ¿Qué condiciones permiten devolver material emitido al lote original?
-7. ¿Qué ocurre con reservas, material emitido y premezcla cuando una OP se pausa, cambia de color, se cancela o se reabre?
+7. ¿Qué ocurre con reservas, material emitido y premezcla cuando una OF se pausa, cambia de color, se cancela o se reabre?
 8. ¿Qué capacidades puede ejecutar y aprobar cada función operativa?
 
 Las respuestas pendientes refinan roles, ubicaciones, estados y ergonomía. No impiden comenzar el TDD del cálculo validado, reservas, emisiones y genealogía mínima de premezcla con fixtures. Deben resolverse antes del piloto y ninguna se convertirá silenciosamente en una constante técnica.
@@ -680,9 +711,9 @@ Las respuestas pendientes refinan roles, ubicaciones, estados y ergonomía. No i
 | Dominio unitario | cálculos de saldo, dosificación, conversiones, estados, devolución y reconciliación | MAT-01, MAT-02, MAT-03, MAT-07, MAT-12, MAT-14, MAT-16, MAT-18, MAT-24, MAT-25, MAT-30 |
 | Integración con BD | atomicidad, concurrencia, idempotencia, eventos, premezcla, genealogía candidata y proyecciones | MAT-04, MAT-08, MAT-09, MAT-10, MAT-11, MAT-13, MAT-19, MAT-20, MAT-21, MAT-27, MAT-29, MAT-31 |
 | Contrato A-B | lectura de disponibilidad, rechazo por estado/retención y versiones | MAT-05, MAT-06, MAT-08, MAT-20, MAT-26 |
-| Contrato P-B | aceptar solo OP liberada, revisión congelada e idempotencia de requerimientos | MAT-01, MAT-22, MAT-30 y PLN-13 |
+| Contrato P-B | aceptar solo OF liberada, revisión congelada e idempotencia de requerimientos | MAT-01, MAT-22 y MAT-30 |
 | Interfaz | plan contra reservas, picking, emisión, premezcla, nivel de genealogía, devolución e incidencias | MAT-07, MAT-13, MAT-14, MAT-16, MAT-20, MAT-28, MAT-29, MAT-31 |
-| E2E A-P-B-C | recibir/liberar material + liberar OP -> reservar/emitir/preparar -> transformar | MAT-03, MAT-13, MAT-15, MAT-28, MAT-29, MAT-31; se habilita cuando A, P y C estén integradas |
+| E2E A-P-B-C | recibir/liberar material + liberar OF -> reservar/emitir/preparar -> transformar | MAT-03, MAT-13, MAT-15, MAT-28, MAT-29, MAT-31; se habilita cuando A, P y C estén integradas |
 
 Orden TDD recomendado:
 
@@ -705,7 +736,7 @@ Los tests de dominio pueden iniciar con un repositorio fake contractual. Atomici
 ## 16. Definición de Preparada para TS-010B
 
 - [x] Se delimitó la dependencia contractual con US-010A sin exigir configuración real de planta.
-- [x] Se delimitó la dependencia contractual con US-010P y se permite una OP liberada fixture durante TDD.
+- [x] Se delimitó la dependencia contractual con US-010P y se permite una OF liberada fixture durante TDD.
 - [x] Se separaron plan, reserva, emisión, consumo en preparación, WIP, devolución y consumo en máquina.
 - [x] Existe dataset sintético reproducible.
 - [x] Existen escenarios de saldo, errores, idempotencia, concurrencia y corrección.
@@ -714,16 +745,16 @@ Los tests de dominio pueden iniciar con un repositorio fake contractual. Atomici
 - [x] Producción definió la base de colorantes como gramos por `25 kg` de material virgen.
 - [x] Producción definió la salida de tolva como frontera de la mezcla preparada y aceptó procedencia por conjunto de proveedores candidatos cuando no existe detalle exacto.
 - [ ] Almacén y Producción revisaron los escenarios `MAT-01` a `MAT-31`.
-- [ ] Se acordó el estado mínimo de OP/lote que habilita reserva y emisión.
+- [ ] Se acordó el estado mínimo de OF/corrida que habilita reserva y emisión.
 - [ ] No quedan decisiones de negocio escondidas en una política técnica.
 
 ## 17. Fuera de Alcance
 
-- Registrar demanda de `ProductoTerminado`, explotar su BOM, calcular faltantes de `PiezaColor` o generar OP; corresponde a US-010P.
+- Registrar demanda de `ProductoTerminado`, explotar su estructura multinivel, netear WIP, calcular faltantes y generar OP/OF/OA; corresponde a US-010P/US-010R.
 - Recepcionar, inspeccionar o liberar lotes de proveedor; corresponde a US-010A.
 - Confirmar consumo en la máquina, ejecutar la transformación de inyección/soplado o calcular su balance de masa; corresponde a US-010C.
 - Crear `LoteSalidaPiezaColor`, registrar producción horaria o merma real; corresponde a US-010C.
-- Pesar y etiquetar bultos de salida; corresponde a US-010D.
+- Planificar sus identidades corresponde a [[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas|US-010C]]; pesarlas, materializarlas y etiquetar el resultado corresponde a [[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion|US-010D]].
 - Moler ramal/rechazo y crear material recuperado; corresponde a US-010E.
 - Definir compras, precios o valorización de inventario.
 - Fijar nombres reales de ubicaciones o asignar usuarios reales durante pruebas automatizadas.
@@ -740,16 +771,16 @@ Los tests de dominio pueden iniciar con un repositorio fake contractual. Atomici
 8. Las pruebas de dominio, integración PostgreSQL, contrato e interfaz afectada están verdes.
 9. El cálculo de colorante usa los kg de virgen y demuestra que material recuperado o `meta_kg` no alteran la base.
 10. Toda premezcla crea un WIP identificable y permite recorrer procedencia exacta o todos los orígenes candidatos, sin inventar cantidades.
-11. El E2E A-P-B-C demuestra que una OP liberada genera requerimientos una sola vez y que una cantidad de material liberada se reserva y emite una sola vez, se consume al confirmar la premezcla y el WIP solo se consume en máquina al confirmar la corrida.
+11. El E2E A-P-B-C demuestra que una OF liberada genera requerimientos una sola vez y que una cantidad de material liberada se reserva y emite una sola vez, se consume al confirmar la premezcla y el WIP solo se consume en máquina al confirmar la corrida.
 12. El vault refleja las decisiones finalmente validadas sobre mezcla y dosificación.
 
-## 19. Corte Frontend con Datos Mock
+## 19. Evolución del Corte Frontend
 
 Implementado el 2026-07-15 para avanzar la experiencia y el TDD sin fingir persistencia backend:
 
 - rutas canónicas `/materiales/preparaciones` y `/materiales/preparaciones/:numeroOp`, conservando `/ordenes/:numeroOp/materiales` como alias;
-- acceso desde el menú de OP y desde la acción de cada orden;
-- selector de OP y lote de producción;
+- acceso desde el menú de OF y desde la acción de cada orden;
+- selector de OF y corrida;
 - etapas `Plan -> Reserva -> Emisión -> Premezcla -> Máquina`;
 - requerimientos, lotes físicos, Calidad, ubicaciones, emisiones, WIP y genealogía con fixtures de `MAT-02` y `MAT-29`;
 - cálculo visible de `70 kg virgen × 500 g / 25 kg = 1.400 kg`;
@@ -764,7 +795,7 @@ Comandos inicialmente bloqueados:
 3. Registrar devolución.
 4. Confirmar premezcla.
 
-La precarga legacy de pigmentos basada en `meta_kg` también queda bloqueada como `Receta trazable` en el formulario de OP. Solo podrá habilitarse cuando el contrato entregue una revisión aprobada con base `g/25 kg virgen` y cantidad absoluta calculada.
+La precarga legacy de pigmentos basada en `meta_kg` también queda bloqueada como `Receta trazable` en el formulario de OF. Solo podrá habilitarse cuando el contrato entregue una revisión aprobada con base `g/25 kg virgen` y cantidad absoluta calculada.
 
 Pruebas frontend incorporadas:
 
@@ -772,4 +803,39 @@ Pruebas frontend incorporadas:
 - `MAT-29`: permite inspeccionar `LMP-B-ROJO-001`, sus `99.400 kg` y los lotes aportantes.
 - los comandos sin API permanecen deshabilitados.
 
-Este corte no completa la historia ni sustituye `TS-010B`; reduce incertidumbre de interfaz y permite conectar cada comando cuando exista su contrato idempotente y transaccional.
+El mock fue el primer corte visual. El 2026-08-03 el adaptador fue reemplazado
+por la API transaccional descrita en [[TS-010B_Reserva_Emision_y_Premezcla_Materiales]]
+y [[SCM_Materiales_OF_Reserva_Emision_Premezcla]]. Los fixtures quedan solo para
+pruebas de componente; no son la fuente de la vista operativa.
+
+## 20. Evidencia de Implementación Local
+
+- migraciones `f58a6b3c4d21` y `f59b7c4d5e32` aplicadas en PostgreSQL local;
+- requerimientos absolutos congelados por corrida y revisión aprobada de receta;
+- reserva atómica sobre saldos de apertura del Kardex;
+- emisión y devolución como traslados de custodia, sin consumo implícito;
+- premezcla como transformación que consume emisiones, crea un lote WIP y
+  conserva inputs exactos o el nivel `CONJUNTO_CANDIDATOS`;
+- capacidades separadas para generar, reservar, emitir, devolver y confirmar
+  premezcla;
+- 11 pruebas backend relacionadas verdes, 3 pruebas de la vista verdes y build
+  frontend exitoso.
+
+### Límite pendiente de UAT
+
+El incremento usa saldos agregados nacidos por `APERTURA_INICIAL`, porque no
+existe Kardex digital legacy. La UAT debe validar actores reales, ubicaciones,
+entrega física, criterio para genealogía candidata y ergonomía de la pantalla.
+El consumo del WIP en máquina continúa perteneciendo a US-010C.
+
+## 21. Addenda US-010M — frontera con Trabajo de color
+
+US-010M no mueve receta, requerimiento, reserva ni emisión a la cabecera OT.
+Esos hechos permanecen ligados a OF/corrida. Cada Trabajo de color referencia
+la corrida exacta y, por esa relación, puede resolver el contexto técnico
+existente sin duplicar requerimientos al cambiar A → B → A.
+
+Este addendum no incorpora lote preparado almacenable, mezcla experimental,
+R1…Rn, una segunda balanza de materiales ni un nuevo consumo físico en máquina.
+La atribución de consumo real sigue pendiente del contrato de US-010B/C y no se
+infiere desde el estado del Trabajo de color.

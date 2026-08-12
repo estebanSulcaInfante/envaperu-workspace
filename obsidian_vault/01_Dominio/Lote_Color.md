@@ -1,54 +1,86 @@
 ---
-tipo: modelo_bd
+tipo: modelo_transicion
 tabla: lote_color
-estado: activo
-tags:
-  - dominio
-  - core
-  - lote
-  - color
-  - produccion
+estado: activo-evoluciona
+tags: [dominio, fabricacion, corrida, color, produccion]
 relaciones_padre:
-  - "[[Orden_Produccion]]"
+  - "[[Orden_Fabricacion]]"
 relaciones_hijos:
   - "[[Composicion_Materiales]]"
   - "[[Receta_Colorantes]]"
+relaciones:
+  - "[[2026-07-29_Separacion_OP_OF_OA_OT_y_Cobertura_NM]]"
 fecha_creacion: 2026-04-21
+fecha_actualizacion: 2026-07-29
 ---
 
-# Lote de Color
+# Lote de Color / Corrida de Fabricación
 
-Entidad hija (`LoteColor`). Cada lote representa un color de producción. Recibe `meta_kg` como **único input** de producción, eliminando el polimorfismo por estrategia.
+`LoteColor` es el nombre técnico actual de una corrida por color dentro de la
+entidad legacy `OrdenProduccion`. En el modelo objetivo evoluciona a
+`CorridaFabricacion`, hija de [[Orden_Fabricacion]].
 
-## Campos de la Tabla
+No es un lote inventariable ni una línea de `ProductoTerminado`. Es una
+instrucción planificada que agrupa un único color/receta y las coladas que se
+ejecutarán con el molde de la OF.
 
-| Atributo                 | Tipo                   | Descripción                                                               | Fórmula / Lógica                                    |
-| :----------------------- | :--------------------- | :------------------------------------------------------------------------ | :-------------------------------------------------- |
-| **Color**                | Input (FK)             | Referencia a `ColorProduccion` (normalizado en TS-008). | -                                                   |
-| **Producto SKU Output**  | Input (FK, nullable)   | Referencia al SKU de `ProductoTerminado` que produce este lote.           | -                                                   |
-| **meta_kg**              | **Input directo**      | Kilos objetivo para este color. Es el único input de producción del lote. | Usuario ingresa directamente                        |
-| **Personas**             | Input                  | Operarios asignados a la mezcla. Default: 1.                              | -                                                   |
-| **calculo_coladas**      | Calculado (persistido) | Golpes necesarios para cumplir la meta. Float exacto, sin redondeo.       | `(meta_kg × 1000) / peso_neto_golpe_gr`             |
-| **calculo_kg_real**      | Calculado (persistido) | Kg reales que produce la máquina exactamente.                             | `calculo_coladas × peso_neto_golpe_gr / 1000`       |
-| **calculo_horas_hombre** | Calculado (persistido) | Horas-Hombre proporcionales al tiempo total de la orden.                  | `(dias_orden × horas_turno × personas) / n_colores` |
+## Campos objetivo
 
-> **Nota sobre `calculo_coladas`:** Es Float exacto sin `math.ceil`. Si se requiere un entero para planificación física, se aplica ceil en la capa de presentación.
+| Campo | Regla |
+|---|---|
+| `orden_fabricacion_id` | OF técnica padre. La FK actual `orden_id` es transición. |
+| `codigo/revision` | Identidad estable de corrida dentro de la OF. |
+| `color_produccion_id` | Un único color exacto. |
+| `receta_revision_id/hash` | Revisión congelada al liberar. |
+| `material_policy_snapshot` | Materia base y política aplicable. |
+| `ciclos_objetivo` | Entero positivo; autoridad física de planificación. |
+| `secuencia` | Orden de ejecución dentro de la OF. |
+| `estado` | `BORRADOR`, `LIBERADA`, `EN_EJECUCION`, `COMPLETADA`, `ANULADA`. |
 
-## Estructura JSON (dentro de la respuesta de [[Orden_Produccion]])
+## Salidas
 
-```json
-{
-  "id": 1,
-  "Color": "Amarillo",
-  "meta_kg": 175.0,
-  "kg_real": 174.993,
-  "coladas": 1006.8390,
-  "materiales": [ ... ],
-  "pigmentos": [ ... ],
-  "mano_obra": { "personas": 1, "horas_hombre": 18.3 }
-}
+Una corrida posee N `SalidaFabricacion` derivadas de la composición del molde:
+
+- artículo `PiezaColor`, WIP o PT permitido por la ruta;
+- cantidad por ciclo;
+- peso unitario snapshot;
+- cantidad y kg estándar objetivo;
+- cantidad asignada a demanda;
+- excedente inevitable.
+
+El campo actual `producto_sku_output` no es autoridad y deja de usarse en altas
+nuevas. Un molde multipieza no se reduce a un producto singular.
+
+## Compatibilidad con `meta_kg`
+
+`meta_kg` se conserva en filas legacy y puede seguir mostrándose en la impresión
+histórica. Para órdenes nuevas:
+
+```text
+ciclos_objetivo =
+    ceil(unidades_faltantes_limitantes / cantidad_por_ciclo_limitante)
+
+cantidad_salida =
+    ciclos_objetivo * cantidad_por_ciclo_snapshot
+
+kg_estandar_salida =
+    cantidad_salida * peso_unitario_snapshot_gr / 1000
 ```
 
+Los kg son una salida calculada. No se liberan fracciones de colada ni se usa
+`meta_kg` como única entrada comercial.
+
 ## Relaciones
-- **Padre:** [[Orden_Produccion]] (N:1)
-- **Hijos:** [[Composicion_Materiales]] (1:N), [[Receta_Colorantes]] (1:N)
+
+- **Padre objetivo:** [[Orden_Fabricacion]].
+- **Ejecución:** N [[Registro_Diario|OT]], cada una enlazada a esta corrida.
+- **Hijos técnicos:** requerimientos de material, receta congelada y N salidas.
+- **Cobertura:** cada salida se asigna N:M a líneas de [[Orden_Produccion]].
+
+## Invariantes
+
+1. Una corrida usa un único color y receta.
+2. Los ciclos liberados son enteros.
+3. Sus salidas proceden del mismo molde/revisión congelados por la OF.
+4. Una OT no infiere la corrida por nombre de color.
+5. La corrida no crea inventario; sus confirmaciones físicas lo hacen.

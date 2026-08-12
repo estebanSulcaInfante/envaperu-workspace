@@ -20,10 +20,12 @@ Puede consultar y mantener:
 
 Puede publicar directamente revisiones técnicas creadas durante la carga inicial para no bloquear el trabajo por segregación de funciones. La publicación conserva la auditoría del actor.
 
+Su entrada principal para altas nuevas de ProductoTerminado será la sesión durable de [[../05_Especificaciones/02_User_Stories/US-012_Alta_Guiada_Integral_de_ProductoTerminado|US-012]]. La vista compone estas capacidades existentes y no incorpora un permiso global que permita omitir validaciones de catálogo o ingeniería.
+
 No recibe capacidades de:
 
 - administración de participantes, identidades o roles;
-- planificación y ejecución de OP, OF, OE u OT;
+- planificación y ejecución de OP, OF, OA u OT;
 - pesaje, anulación o corrección;
 - recepción, Calidad, Kardex, inventario o molienda.
 

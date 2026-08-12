@@ -5,10 +5,15 @@ tags: [arquitectura, color, base-datos, refactor, dominio]
 relaciones:
   - "[[US-006_Normalizar_Composicion_Color_Familia]]"
   - "[[US-007_Normalizar_ProductoTerminado_PiezaColor_Salidas_OP]]"
+  - "[[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque]]"
 fecha_creacion: 2026-07-11
+fecha_actualizacion: 2026-07-24
 ---
 
 # US-008: Normalización de Dominio: Reemplazo de ColorProducto por ColorBase y ColorProduccion
+
+> [!IMPORTANT] Alcance de BOM refinado
+> Esta historia continúa siendo la autoridad del dominio de color. Sus referencias a una BOM de producto formada exclusivamente por `PiezaColor` describen el primer corte plano; [[US-010R_Rutas_BOM_Multinivel_WIP_y_Perfiles_Empaque|US-010R]] introduce la estructura multinivel canónica, cuyos nodos intermedios pueden ser WIP y cuyas hojas físicas continúan llegando a `PiezaColor`.
 
 ## 1. Contexto y Hallazgo Empírico
 

@@ -1,11 +1,11 @@
 ---
 tipo: tech_spec
 id: TS-015
-titulo: "Asistente de catálogo, altas en contexto e integridad de OP excepcional"
+titulo: "Asistente de catálogo, altas en contexto e integridad de OF excepcional"
 estado: en-desarrollo
 tags: [catalogo, wizard, ux, altas-en-contexto, orden-produccion, integridad]
 fecha_creacion: 2026-07-22
-fecha_actualizacion: 2026-07-23
+fecha_actualizacion: 2026-08-10
 relaciones:
   - "[[TS-001_Creacion_Agil_Molde_Producto_Pieza]]"
   - "[[TS-012_Normalizacion_Relacion_Molde_Pieza_NM]]"
@@ -14,9 +14,14 @@ relaciones:
   - "[[../02_User_Stories/US-007_Normalizar_ProductoTerminado_PiezaColor_Salidas_OP]]"
   - "[[../02_User_Stories/US-010P_Planificar_Demanda_ProductoTerminado_y_Generar_OP]]"
   - "[[../../../03_Frontend/Componentes/Patron_Altas_En_Contexto]]"
+  - "[[TS-017A_Sesion_Durable_y_Shell_de_Alta_Guiada]]"
+  - "[[../02_User_Stories/US-012_Alta_Guiada_Integral_de_ProductoTerminado]]"
 ---
 
-# TS-015: Asistente de catálogo, altas en contexto e integridad de OP excepcional
+# TS-015: Asistente de catálogo, altas en contexto e integridad de OF excepcional
+
+> [!IMPORTANT] Alcance sustituido parcialmente
+> La familia [[../02_User_Stories/US-012_Alta_Guiada_Integral_de_ProductoTerminado|US-012]] / TS-017 sustituye este wizard como interfaz principal de alta de ProductoTerminado. TS-015 conserva autoridad sobre el patrón **Crear nuevo…** y sobre la integridad de la OF excepcional. Su flujo Molde–Pieza–PiezaColor queda como antecedente y fachada transitoria; no debe ampliarse con BOM plano ni presentarse como recorrido integral.
 
 ## 1. Decisión
 
@@ -24,7 +29,10 @@ El wizard Molde–Pieza–PiezaColor es una herramienta de alta coordinada de ca
 
 Los formularios que dependen de catálogos pequeños adoptan el patrón **“Crear nuevo…” al final del selector**. La creación ocurre en un modal, conserva el formulario padre, vuelve a consultar el catálogo y selecciona la entidad confirmada. Los maestros complejos no se reducen a un modal incompleto: se crean con su formulario completo o con la configuración guiada.
 
-La creación directa de una OP se mantiene como **OP excepcional**. El flujo normal de demanda y liberación continúa perteneciendo a US-010P. La excepción no autoriza relaciones arbitrarias ni fallbacks a la primera fila disponible.
+La creación directa de la orden técnica pasa a llamarse **OF excepcional**. El
+flujo normal crea una OP de demanda y propone OF/OA mediante US-010P. La
+excepción no autoriza relaciones arbitrarias ni fallbacks a la primera fila
+disponible.
 
 ## 2. Wizard conforme al modelo vigente
 
@@ -32,8 +40,8 @@ El asistente debe respetar estas reglas antes de guardar:
 
 1. `Molde` y `Pieza` son maestros independientes.
 2. Una pieza global puede participar en varios moldes; `cavidades` y `peso_unitario_gr` viven en `MoldePieza`.
-3. Una pieza debe tener un par activo `LineaFamilia` antes de generar variantes `PiezaColor`; el alta contextual desde un molde exige ambos campos.
-4. `PiezaColor` deriva Línea y Familia de su `Pieza` y nunca acepta una combinación divergente.
+3. En el flujo transitorio de esta TS, una pieza clasificada usa un par activo `LineaFamilia`. Para altas integrales nuevas, [[../../../20_Registro_Decisiones/2026-08-10_Autoridad_de_Clasificacion_Comercial_en_ProductoTerminado|la decisión del 2026-08-10]] hace opcional la clasificación técnica de Pieza y elimina este bloqueo para generar PiezaColor.
+4. Los campos Línea/Familia duplicados en `PiezaColor` son compatibilidad legacy y no constituyen autoridad comercial para nuevas altas.
 5. Un color operativo es `ColorBase + FamiliaColor`; ambos son obligatorios en altas nuevas.
 6. Los códigos de Molde, Pieza, PiezaColor y ProductoTerminado son correlativos asignados por el backend. El usuario no escribe ni confirma una identidad calculada por el frontend.
 7. Al reutilizar un molde o una pieza, el asistente referencia su identidad existente. No duplica la entidad por nombre.
@@ -63,7 +71,7 @@ Reglas de interacción:
 
 Para entidades con más reglas —Molde, Pieza con composición, PiezaColor con clasificación o ProductoTerminado con BOM— el selector puede ofrecer acceso a **Configuración guiada**, pero no debe insertar una fila parcial.
 
-## 4. Integridad de la OP excepcional
+## 4. Integridad de la OF excepcional
 
 `POST /api/ordenes` y `GET /api/validar-orden-prereq` comparten las reglas de identidad y compatibilidad de catálogo. El formulario valida además sus campos locales y el `POST` vuelve a validar autoritativamente el payload completo dentro de la transacción:
 
@@ -76,7 +84,7 @@ Para entidades con más reglas —Molde, Pieza con composición, PiezaColor con 
 7. cada color existe, posee `familia_color_id` y se resuelve contra todas las piezas del molde;
 8. la combinación `Pieza + ColorProduccion` se resuelve o crea de manera idempotente; nunca se toma la primera variante encontrada;
 9. si se informa un ProductoTerminado, debe existir y su clasificación Línea–Familia debe seguir activa;
-10. el backend no descubre un ProductoTerminado mediante un `.first()` ambiguo; una OP excepcional puede no tener producto asociado;
+10. el backend no descubre un ProductoTerminado mediante un `.first()` ambiguo; una OF excepcional puede no tener producto asociado;
 11. un error funcional produce `400`, `404` o `409` y revierte toda la transacción; no deja cabecera, snapshot, lotes ni variantes parciales;
 12. la prevalidación devuelve errores y advertencias accionables con los mismos códigos de dominio para las condiciones que puede evaluar; parámetros técnicos, snapshot manual y detalle íntegro de lotes se confirman en el `POST`.
 
@@ -122,7 +130,7 @@ La prueba con una OP legacy nunca debe inferir genealogía por nombre ni elegir 
 | OPX-03 | API: un color nuevo resuelve exactamente una variante por pieza del molde de forma idempotente. |
 | OPX-04 | API: no se infiere un ProductoTerminado ambiguo. |
 | OPX-05 | Contrato: prevalidación y creación usan los mismos códigos para incompatibilidades de catálogo; el `POST` conserva la validación autoritativa completa. |
-| OPX-06 | E2E: desde catálogos operativos vacíos se crean los maestros requeridos, una receta aprobada y una OP excepcional; el `GET` conserva la revisión de receta y una salida física por pieza del molde. |
+| OPX-06 | E2E: desde catálogos operativos vacíos se crean los maestros requeridos, una receta aprobada y una OF excepcional; el `GET` conserva la revisión de receta y una salida física por pieza del molde. |
 | MIG-01 | Esquema: el snapshot referencia `Pieza` mediante `pieza_id`, conserva código/nombre históricos y `pieza_sku_legacy` no posee FK. |
 | MIG-02 | Escritura: una OP nueva completa los campos canónicos y deja `pieza_sku_legacy` en `NULL`. |
 | MIG-03 | Pendiente condicionado: la primera OP legacy se procesa con el checklist de reconciliación de US-007 antes de endurecer o retirar columnas. |

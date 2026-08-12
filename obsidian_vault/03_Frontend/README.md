@@ -36,7 +36,11 @@ Estos estados describen la madurez de una vista, no el estado de aprobación de 
 
 - [[03_Frontend/Vistas/_index|Vistas]]: pantallas, rutas, actores, estados, comandos y cobertura.
 - [[03_Frontend/Componentes/_index|Componentes]]: patrones reutilizables y convenciones de interacción.
-- [[Arquitectura_Navegacion_Por_Procesos]]: menú por procesos, pestañas contextuales, rutas canónicas y compatibilidad.
+- [[Arquitectura_Workspace_SCM_por_Areas]]: arquitectura vigente por áreas,
+  madurez, workspace por capacidades y compatibilidad de rutas.
+- [[Arquitectura_Navegacion_Por_Procesos]]: antecedente histórico supersedido.
+- [[Arquitectura_Guia_SCM_Markdown]]: fuente Markdown, estados del piloto y sincronización entre UAT y guía de usuario.
+- [[Autenticacion_Supabase_y_Experiencia_por_Rol]]: inicio y cierre de sesión, identidad productiva y modo UAT local.
 - [[SCM_Frontend_Overview_US-010]]: mapa visual del flujo SCM iniciado por US-010.
 - [[Patron_Capacidades_API_y_Mocks]]: significado de mock, candado, permiso y disponibilidad por estado.
 - [[Patron_Tablas_Filtros_y_Omnibusqueda]]: barra común, filtros y reglas para datos locales o paginados.

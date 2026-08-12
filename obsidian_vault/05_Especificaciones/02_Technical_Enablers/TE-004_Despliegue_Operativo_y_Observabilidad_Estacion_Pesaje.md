@@ -7,9 +7,13 @@ relaciones:
   - "[[TE-002_CI_Coordinado_Multirepositorio]]"
   - "[[TE-003_Contratos_Central_Pesaje_y_E2E_Aislado]]"
   - "[[US-010_Trazabilidad_End_to_End_SCM]]"
+  - "[[US-010C_Orden_Trabajo_Ejecucion_y_Planificacion_Bolsas]]"
+  - "[[US-010D_Pesaje_Bolsas_Unidad_Logistica_y_Sincronizacion]]"
+  - "[[US-010F_Prearmado_y_Armado_Concurrente_Trazable]]"
   - "[[US-011_Monitorear_Estaciones_de_Pesaje]]"
   - "[[TS-TE-004_Despliegue_y_Comunicacion_Estacion_Pesaje]]"
 fecha_creacion: 2026-07-16
+fecha_actualizacion: 2026-07-23
 ---
 
 # TE-004: Despliegue Operativo y Observabilidad de la Estación de Pesaje
