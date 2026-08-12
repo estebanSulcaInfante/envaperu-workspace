@@ -2,7 +2,7 @@
 tipo: guia_usuario
 estado: piloto
 ruta: /guia/scm
-fecha_actualizacion: 2026-08-10
+fecha_actualizacion: 2026-08-11
 tags: [frontend, scm, guia-usuario, operacion, trazabilidad]
 relacionados:
   - "[[Guia_Roles_y_Permisos_SCM_Piloto]]"
@@ -16,6 +16,9 @@ relacionados:
   - "[[Vista_US-010N3_Jornadas_de_Planta]]"
   - "[[US-010N4_Supervision_de_Produccion_Read_Model_Operativo]]"
   - "[[Vista_US-010N4_Supervision_de_Produccion]]"
+  - "[[US-013_Kardex_MultiAlmacen_Custodia_y_Operaciones_QR]]"
+  - "[[Vista_US-013_Kardex_y_Operaciones_de_Almacen]]"
+  - "[[UAT_TS-018_Kardex_MultiAlmacen_Pickup_y_Custodia]]"
 ---
 
 # Documentación oficial SCM
@@ -62,7 +65,7 @@ segunda guía competidora.
 | 9 | Armado y cierre de mangas PT | /produccion/ordenes-armado |
 | 10 | Pesaje y postetiqueta | /produccion/pesajes |
 | 11 | Corrección, reemplazo y anulación | /produccion/ots-mangas |
-| 12 | Recepción de mangas, Calidad y Kardex | /produccion/recepcion-mangas |
+| 12 | Kardex, custodia y operaciones de almacén | /almacen/operaciones |
 | 13 | Merma recuperable y molienda | /produccion/reproceso |
 
 ## Estructura de cada sección
@@ -100,6 +103,40 @@ Cada tarea contiene:
 - Conservar el evento original y registrar motivo, actor y fecha.
 - Separar solicitante y aprobador cuando aplica el control de cuatro ojos.
 - Verificar estado, etiqueta, ubicación y nuevo evento antes de continuar.
+
+## Kardex, custodia y operaciones de almacén
+
+El capítulo **Almacén y Kardex** de `/guia/scm` es la guía operativa principal
+del modelo multi-almacén. Explica en una sola secuencia:
+
+1. configuración de almacenes, ubicaciones, staging, pickup y alcance por
+   trabajador;
+2. diferencia entre físico, libre, reservado y no disponible;
+3. recepción de mangas y decisión separada de Calidad;
+4. sesiones multi-QR sin movimiento hasta la confirmación;
+5. picking, despacho, tránsito, pickup directo a Mesa de Armado y retorno;
+6. diferencias de recepción y alertas de más de 24 horas;
+7. separación entre las vistas operativas de Almacén y la consulta transversal
+   de Control.
+
+La guía declara expresamente que reservar o preparar un picking no descuenta el
+físico, que pickup acredita custodia en Mesa de Armado pero no consume piezas,
+y que una transferencia conserva el físico global. También mantiene UN y KG
+como magnitudes separadas y prohíbe corregir saldos borrando movimientos.
+
+Rutas visibles documentadas:
+
+- `/almacen/operaciones` para entrada, transferencia, pickup y retorno;
+- `/almacen/kardex` para posiciones y movimientos dentro del alcance;
+- `/almacen/transferencias` para la bandeja de custodia y diferencias;
+- `/control/inventario` para supervisión transversal de sólo lectura;
+- `/produccion/recepcion-mangas` para el flujo especializado de recepción y
+  Calidad que continúa durante el piloto.
+
+> [!warning] Aceptación pendiente
+> La guía diferencia funcionalidad implementada de aceptación física. La prueba
+> con lector, el lote real multi-QR y la recepción con diferencia continúan
+> pendientes de UAT en planta.
 
 ## Regla de maestros de piezas
 
