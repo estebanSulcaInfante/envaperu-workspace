@@ -11,7 +11,7 @@ relaciones:
   - "[[Orden_Fabricacion]]"
   - "[[2026-07-29_Separacion_OP_OF_OA_OT_y_Cobertura_NM]]"
 fecha_creacion: 2026-07-24
-fecha_actualizacion: 2026-07-29
+fecha_actualizacion: 2026-09-04
 ---
 
 # Etiqueta de Manga
@@ -31,30 +31,56 @@ Ambos tipos pueden estar vigentes simultáneamente. Imprimir la etiqueta de post
 
 ## Contenido visible del piloto
 
-Ambas etiquetas repiten deliberadamente los datos de identidad para que el trabajador pueda comprobar que pertenecen a la misma manga:
+La preetiqueta nueva `PREPESAJE_TSPL_5` prioriza el reconocimiento inmediato de
+la manga y muestra únicamente:
 
-- fecha y hora de esa impresión;
-- fecha operativa de OT;
-- `OF-OT`;
-- maquinista previsto;
-- pieza-color o artículo de salida;
-- color;
-- código de manga `OF0042-OT301-M003`;
-- tipo `NORMAL` o `EXTRA`, destacado visualmente;
-- QR identificado.
+- código de manga `OF000017-OT007-M003`, en 24 puntos de plantilla;
+- pieza y color en filas independientes;
+- separación horizontal después de color;
+- OP opcional cuando el payload tiene una referencia inequívoca, arriba de máquina;
+- máquina y, debajo, `TIPO MANGA`; luego turno y fecha operativa original de OT;
+- operador previsto y fecha/hora local de impresión;
+- `KG TEORICOS`, con tres decimales, calculados como
+  `cantidad_planificada_un × peso_unitario_snapshot_g / 1000`;
+- QR compacto identificado.
 
-La etiqueta `POSTPESAJE` añade:
+El resto del texto usa 16 puntos de plantilla. `KG TEORICOS` es una referencia
+previa al pesaje y nunca sustituye el peso real. Los UUID y cantidades permanecen
+en el payload autoritativo. El renderer comparte layout compacto para v4/v5 y
+admite `kg_estimados` como fallback; no afirmar que re-renderizar v4 reproduce
+exactamente un papel antiguo. El payload y hash de emisión conservan su historia.
 
-- `KG FÍSICO`: peso neto medido de todo el contenido;
-- `KG PROD. OT`: masa estándar atribuible a la producción de la OT, descontando componentes previos según cantidades y snapshots.
+Brecha a revisar en UAT: `tipo_manga` se alimenta actualmente con `manga.tipo`
+(`NORMAL`/`EXTRA`), no con el nombre físico del contenedor. No afirmar que ya
+imprime «reciclada grande». Ver hallazgos del guion de módulo.
+
+La etiqueta nueva `POSTPESAJE_TSPL_5` muestra:
+
+- fecha/hora y debajo el maquinista del contexto de cierre;
+- `PESO NETO FINAL (kg)`: peso medido de todo el contenido;
+- debajo, `PESO FABRICADO TEORICO (kg)`, cuando existe una fuente válida:
+  excluye componentes incorporados que no se fabricaron en esa OT;
+- `FINAL · MANGA CERRADA` y cantidad según fuente: `CONTEO TEORICO` para
+  `PLAN_CONFIRMADO_POR_PESAJE`; `CONTEO CONFIRMADO` para fuente explícita
+  Armado/parcial/corrección. El segundo rótulo no acredita fiabilidad humana;
+  la nueva política cero conteos aún no está implementada integralmente;
+- no imprime otro QR: se conserva la preetiqueta.
+
+`CONTROL_PESO_TSPL_2` para `AVANCE_KG` muestra NET acumulado y aporte desde el
+control anterior, `AVANCE EN KG · SIN CONTEO`, sin QR ni unidades.
+Brecha conocida del final: su rótulo `APORTE ULTIMO TRAMO` recibe un delta desde
+el último control; varios controles dentro de un tramo hacen que no equivalga
+al aporte completo del trabajador. No certificar esa atribución en la UAT.
 
 No se usan “peso bruto” y “peso neto” para representar estas dos magnitudes porque no constituyen tara y contenido: ambas describen perspectivas distintas del contenido productivo. Bruto y tara permanecen en el registro digital y pueden imprimirse solo si el espacio/operación lo exige.
 
-El diseño `PREPESAJE_TSPL_2` conserva el formato 2-up: soporte de `109 mm × 50 mm`, `GAP 3
+El diseño `PREPESAJE_TSPL_5` conserva el formato 2-up: soporte de `109 mm × 50 mm`, `GAP 3
 mm`, 203 DPI y dos columnas de `50 mm`/400 dots, iniciadas en X `24` y `464`.
-Cada columna corresponde a una manga y etiqueta distintas; un lote impar deja
-la segunda columna vacía. La alineación y legibilidad todavía requieren UAT
-física en la impresora piloto.
+El renderer vigente emite dos copias de la misma identidad por hoja; si el
+trabajo contiene dos identidades, produce dos hojas. No son dos mangas nuevas.
+La alineación y legibilidad todavía requieren UAT física en la impresora piloto.
+Fuente: [[REC_2026-09-01_Stickers_Pesaje_TSPL5_y_Peso_Fabricado]] y
+[[UAT_US-010K_Modulo_Pesaje_Piloto_Kg]].
 
 ## Atributos objetivo
 
@@ -74,18 +100,24 @@ física en la impresora piloto.
 
 ## QR
 
-El QR usa un contrato versionado y contiene, como mínimo:
+El QR impreso usa un sobre compacto y resoluble:
 
 ```json
 {
   "v": 1,
-  "type": "SCM_MANGA_LABEL",
-  "manga_id": "uuid-o-ulid",
-  "label_id": "uuid-o-ulid",
-  "label_type": "PREPESAJE",
-  "label_version": 2
+  "label_id": "uuid-etiqueta"
 }
 ```
+
+`label_id` identifica una impresión concreta. La estación consulta Central para
+resolver la manga, el tipo y versión de etiqueta, el trabajo-color y la vigencia;
+estos campos permanecen en el payload autoritativo y no se duplican dentro del
+símbolo físico. Una etiqueta invalidada sigue bloqueándose por su `label_id` y
+señala el reemplazo vigente.
+
+Los QR largos v1 ya emitidos y el UUID directo permanecen aceptados como formatos
+de lectura compatibles. La emisión nueva usa el sobre compacto definido en
+[[../20_Registro_Decisiones/2026-09-01_QR_Compacto_por_Label_ID_en_Preetiqueta|QR compacto por label_id]].
 
 El código humano de una manga nueva, por ejemplo `OF0042-OT301-M003`, se
 imprime como ayuda, pero no sustituye los IDs. Una etiqueta v1 ya emitida
@@ -106,3 +138,15 @@ puede reintentar el mismo `print_job_id`; cada intento queda como evidencia
 append-only en la estación. Si existe la posibilidad de que la etiqueta haya
 sido emitida, se invalida y reemplaza; no se declara una reimpresión
 indistinguible.
+
+### Cierre reabierto
+
+`REABRIR_MANGA` no reemplaza la preetiqueta: su `label_id`, QR e identidad de
+manga siguen vigentes. Invalida únicamente los comprobantes `POSTPESAJE` del
+cierre que dejó de ser vigente. La persona autorizada debe retirar o marcar
+como inválido el comprobante final anterior antes de continuar con la misma
+manga. El siguiente cierre crea otro hecho y otro comprobante sin alterar el
+QR pegado. La reapertura distingue `CIERRE_ACCIDENTAL`, cuyo NET anterior no
+gobierna el siguiente peso, y `CONTINUAR_LLENADO`, cuyo NET queda como línea
+base acumulativa. Esto es distinto de `ANULAR_PESAJE`, que invalida toda la
+identidad operativa y devuelve el cupo al plan.

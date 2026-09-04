@@ -1,6 +1,6 @@
 ---
 tipo: technical-enabler
-estado: en-refinamiento
+estado: en-desarrollo
 tags: [pesaje, despliegue, windows, socketio, offline-first, observabilidad, seguridad, backup, tdd]
 relaciones:
   - "[[TE-001_Infraestructura_TDD_Reproducible]]"
@@ -13,7 +13,7 @@ relaciones:
   - "[[US-011_Monitorear_Estaciones_de_Pesaje]]"
   - "[[TS-TE-004_Despliegue_y_Comunicacion_Estacion_Pesaje]]"
 fecha_creacion: 2026-07-16
-fecha_actualizacion: 2026-07-23
+fecha_actualizacion: 2026-08-24
 ---
 
 # TE-004: Despliegue Operativo y Observabilidad de la Estación de Pesaje

@@ -133,7 +133,9 @@ Reglas:
 - Códigos visibles no reutilizables: `OT-000001`, `TMG-000001` y `OP0084-OT001-M001`.
 - Estados almacenados como `String` con `CheckConstraint`.
 - Agregados editables llevan `version > 0`.
-- El QR lleva IDs y versión; el código visible no es el contrato de identidad.
+- El QR lleva un sobre versionado y `label_id`; Central resuelve los demás IDs,
+  la versión concreta de etiqueta y su vigencia. El código visible no es el
+  contrato de identidad.
 - Ningún cálculo de capacidad usa `Float`, `round()` binario ni `MAX(codigo) + 1`.
 
 ## 5. Modelo de datos
@@ -231,18 +233,35 @@ Checks:
 
 Una emisión `IMPRESA` consume el cupo. `EMISION_INCIERTA` se trata conservadoramente como posiblemente consumido hasta que JP invalide y reemplace. `FALLIDA_SIN_EMISION` permite reintentar el mismo `print_job_id`.
 
-El QR `SCM_MANGA_LABEL` contiene:
+Los QR nuevos de `PREPESAJE` contienen el sobre compacto:
 
 ```json
 {
   "v": 1,
-  "type": "SCM_MANGA_LABEL",
-  "manga_id": "uuid",
-  "label_id": "uuid",
-  "label_type": "PREPESAJE",
-  "label_version": 1
+  "label_id": "uuid"
 }
 ```
+
+El payload autoritativo de Central conserva `type`, `manga_id`, `label_type`,
+`label_version` y `trabajo_color_id`; solo se compacta la representación física.
+La estación acepta además el JSON largo v1 y el UUID directo para no invalidar
+etiquetas ya emitidas. Ver
+[[../../20_Registro_Decisiones/2026-09-01_QR_Compacto_por_Label_ID_en_Preetiqueta|decisión de QR compacto]].
+
+La versión física `PREPESAJE_TSPL_5`, ajustada con el usuario el 2026-09-01,
+usa el código de manga como cabecera de 24 puntos y el resto del texto a 16
+puntos. Pieza y color ocupan filas separadas. Una línea horizontal separa la
+identidad del producto del contexto de ejecución. Cuando existe una OP
+inequívoca, `OP` aparece después del separador e inmediatamente antes de
+`MAQUINA`; las OF/OA excepcionales sin OP omiten esa fila. `TIPO MANGA` aparece
+inmediatamente debajo de `MAQUINA`. Las filas restantes son turno,
+fecha original de OT, operador, hora de impresión y `KG TEORICOS`. Esta última
+magnitud se congela en el payload como
+`cantidad_planificada_un × peso_unitario_snapshot_g / 1000`, con tres
+decimales; es informativa y no constituye pesaje. El payload conserva OF/OA,
+OT, cantidad, tipo y relaciones técnicas aunque no todas se impriman. La
+estación conserva compatibilidad con trabajos compactos v4 y con las plantillas
+v1–v3 ya generadas.
 
 ## 6. Transacciones principales
 
@@ -256,6 +275,25 @@ El QR `SCM_MANGA_LABEL` contiene:
 6. registrar evento.
 
 No puede recalcularse si el cambio deja asignaciones existentes por encima del nuevo plan; primero se concilia.
+
+Adenda UI local 2026-09-02: el alta de Trabajo de color distingue primer cálculo
+(«Calcular propuesta de mangas», mensaje de plan inexistente) de recálculo
+secundario. Consulta fallida se presenta como error recuperable, no como falta
+de plan. La propuesta muestra pieza/color, capacidad, pendiente de asignar y
+mangas propuestas totales de OF por salida; unidades de planificación, no conteo
+físico. «Ver OF» abre su detalle en otra pestaña. Alta bloqueada sin plan disponible
+y asignación válida; continuidad compatible puede consumir cero saldo nuevo.
+Permisos y servicio de cálculo no cambian. Alcance local, UX provisional:
+[[REC_2026-09-02_Propuesta_Mangas_Contextual_OT]].
+
+Adenda kg local 2026-09-02: en el alta del trabajo la referencia/entrada primaria
+es kg teóricos de la salida. Se usa peso unitario congelado de la salida exacta
+por ID. Si kg no equivalen a UN enteras, se ofrecen inferior/superior válidas
+con diferencia explícita, sin redondeo automático; se envía al contrato existente
+la cantidad UN elegida. Última manga parcial genera aviso no bloqueante para
+cualquier resto, sin umbral inventado. Sin peso o equivalencia resuelta no se
+envía asignación. No son kg de inventario ni balanza; WIP usa peso de salida, no
+peso inyectado aislado. [[REC_2026-09-02_Asignacion_Kg_y_Manga_Parcial]].
 
 ### 6.2. Crear OT y asignar plan
 

@@ -248,7 +248,11 @@ cantidad_confirmada = manga.cantidad_asignada
 fuente_cantidad = PLAN_CONFIRMADO_POR_PESAJE
 ```
 
-No existe input de cantidad en el flujo normal. Una diferencia posterior es una corrección autorizada, no una edición del pesaje.
+No existe input de cantidad en el flujo normal. Esta operación confirma
+contractualmente la asignación para el movimiento posterior, pero no constituye
+un conteo observado por la estación. `PLAN_CONFIRMADO_POR_PESAJE` no significa
+`INFERIDA_DESDE_PESO`: bruto, tara y neto no alteran la cantidad. Una diferencia
+posterior es una corrección autorizada, no una edición del pesaje.
 
 ### 5.3. Kg de producción de la OT
 

@@ -1,7 +1,7 @@
 ---
 tipo: tech-spec
 subtipo: technical-enabler
-estado: en-refinamiento
+estado: aprobada-para-desarrollo
 tags: [pesaje, windows, flask, socketio, waitress, offline-first, observabilidad, integracion, seguridad, tdd]
 relaciones:
   - "[[TE-004_Despliegue_Operativo_y_Observabilidad_Estacion_Pesaje]]"
@@ -15,7 +15,7 @@ relaciones:
   - "[[US-010F_Prearmado_y_Armado_Concurrente_Trazable]]"
   - "[[2026-07-17_Autenticacion_Humana_Diferida_Hasta_Cierre_Funcional]]"
 fecha_creacion: 2026-07-16
-fecha_actualizacion: 2026-07-23
+fecha_actualizacion: 2026-08-24
 ---
 
 # TS-TE-004: Despliegue y Comunicación de la Estación de Pesaje
@@ -1743,3 +1743,28 @@ Evidencia local:
 - warning no bloqueante: chunk principal Vite mayor a 500 kB, pendiente de code splitting.
 
 Orden de despliegue obligatorio: API central y migración, frontend central y finalmente estación física. Desplegar primero la estación produciría una incompatibilidad visible de capabilities, aunque la captura local seguiría disponible.
+
+### 33.13. Incremento 13: release versionado y rollback transaccional
+
+Implementado localmente el 2026-08-24 siguiendo [[DEV-TE-004_Actualizacion_Segura_Estacion_Edge]]:
+
+1. **RED:** no existía un gestor de releases; un ZIP no tenía identidad, hashes por archivo, staging ni puntero activo.
+2. **GREEN:** `station_release.py` genera/verifica `manifest.json`, exige SemVer y `win-x64`, y rechaza archivos ausentes, alterados, no declarados, symlinks y traversal.
+3. **GREEN:** `stage_release` exige el SHA-256 integral comunicado por soporte, extrae dentro de `releases/.staging-*` y activa una carpeta inmutable por versión mediante rename atómico.
+4. **GREEN:** `ActiveReleaseStore` escribe `ProgramData/run/active-release.json` mediante archivo temporal + `os.replace`; conserva versión activa, anterior, fecha y backup previo.
+5. **GREEN:** CI compila React, ejecuta suites, genera wheelhouse offline, manifiesto, ZIP y `.sha256`; la PC no necesita Node ni acceso a Internet.
+6. **GREEN:** `Update-Station.ps1` instala un venv por release, respalda SQLite, prueba migraciones sobre una copia, detiene el runtime solo después del preflight, activa y espera readiness.
+7. **ROLLBACK:** un fallo recupera puntero, backup y runtime previos. El rollback manual exige confirmar que no hubo capturas posteriores.
+8. **AISLAMIENTO:** `ProgramData` nunca se empaqueta ni elimina; token DPAPI, configuración, SQLite, backups y logs sobreviven al reemplazo de código.
+9. **SEGURIDAD:** el hash prueba integridad. La autoridad piloto depende del artefacto privado de CI y verificación por canal separado; Authenticode queda pendiente antes de distribución no controlada.
+10. **UAT:** [[UAT_TE-004_Actualizacion_Estacion_Edge]] separa rechazo de paquete alterado, actualización normal, rollback automático y reinicio Windows.
+
+Evidencia local:
+
+- gestor: `6 passed`;
+- baseline runtime/backup/persistencia: `23 passed`;
+- paquete real `1.2.0-uat` construido y activado en sandbox;
+- frontend: `135 modules transformed`;
+- scripts PowerShell de build/start/update/rollback: parser verde.
+
+Permanecen pendientes el wheelhouse completo en CI remoto, UAT con balanza/impresora, Task Scheduler y firma Authenticode. Central ya observa `STATION_APP_VERSION` por heartbeat; este incremento no agrega comandos remotos ni descarga silenciosa.

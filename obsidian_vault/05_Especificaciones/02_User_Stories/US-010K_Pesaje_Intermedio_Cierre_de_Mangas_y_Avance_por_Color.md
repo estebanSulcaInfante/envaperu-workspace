@@ -1,7 +1,7 @@
 ---
 tipo: user-story
 subtipo: historia-hija
-estado: en-refinamiento
+estado: implementada-parcial-local-pendiente-uat
 epica: "[[US-010_Trazabilidad_End_to_End_SCM]]"
 tags: [scm, pesaje, manga, pesaje-intermedio, cierre-final, avance-color, atdd, tdd]
 relaciones:
@@ -21,11 +21,33 @@ relaciones:
   - "[[Registro_Diario]]"
   - "[[2026-08-01_Corte_Horario_sin_Pesaje_de_Manga_Abierta]]"
   - "[[2026-08-01_Stickers_Prepesaje_como_Orden_Fisica_de_Manga]]"
+  - "[[2026-08-26_Corte_Acumulado_y_Continuidad_de_Manga_entre_OT]]"
+  - "[[US-010K1_Corte_Acumulado_y_Continuidad_de_Manga_entre_OT]]"
+  - "[[2026-08-31_Control_Avance_en_Kg_sin_Conteo_y_Accion_Unica_Pesaje]]"
+  - "[[US-010K3_Control_Avance_Kg_y_Contexto_Visible_en_Estacion]]"
 fecha_creacion: 2026-08-07
-fecha_actualizacion: 2026-08-07
+fecha_actualizacion: 2026-08-31
 ---
 
 # US-010K: Pesaje intermedio, cierre de mangas y avance por color
+
+## Cortes implementados para el piloto de piezas
+
+El piloto local distingue tres resultados para mangas simples de Fabricación,
+aunque la estación usa una sola acción física de pesaje:
+
+- **avance K3 dentro del mismo tramo**: guarda kg acumulados y aporte, imprime
+  CONTROL sin QR/conteo y mantiene manga, Trabajo y tramo activos;
+
+- **cierre final parcial supervisado**: requiere cantidad real, motivo y
+  capacidad `MANGA_FINALIZAR_PARCIAL`; confirma solo esa cantidad, genera la
+  postetiqueta, reduce el objetivo del Trabajo por el remanente y devuelve ese
+  saldo al plan;
+- **continuidad K1/K2 entre turnos/OT**: conserva manga y QR, crea tramos
+  auditados y confirma un solo final con atribución por trabajador/OT.
+
+K1 no incluye reapertura, Armado, continuidad offline ni cambio de
+máquina/OF/corrida/color/receta/salida. Esas extensiones siguen en refinamiento.
 
 ## 1. Decisión de alcance
 
@@ -35,13 +57,20 @@ turno y pueden permanecer en llenado hasta tres días. El sistema debe observar
 ese avance sin convertir cada lectura acumulada en otra bolsa, sin acreditar
 prematuramente todas las unidades y sin crear inventario antes del cierre.
 
-Esta historia reabre de manera explícita la decisión
-[[2026-08-01_Corte_Horario_sin_Pesaje_de_Manga_Abierta]], que excluyó los
-pesajes acumulativos del primer piloto. Mientras US-010K continúe
-`en-refinamiento`, el comportamiento productivo vigente sigue siendo un único
-pesaje final sobre una manga cerrada. La aprobación posterior de esta historia
-exigirá una nueva decisión que reemplace parcialmente aquella regla, sin borrar
-su historial ni sus criterios sobre OCR y cortes horarios.
+La decisión
+[[2026-08-26_Corte_Acumulado_y_Continuidad_de_Manga_entre_OT]] reemplaza de
+forma acotada la exclusión de
+[[2026-08-01_Corte_Horario_sin_Pesaje_de_Manga_Abierta]]: K1 permite controles
+solo para una manga normal de Fabricación que continúa entre OT compatibles.
+El único hecho productivo sigue siendo el pesaje final; los controles son
+observaciones sin crédito ni Kardex.
+
+La decisión
+[[2026-08-31_Control_Avance_en_Kg_sin_Conteo_y_Accion_Unica_Pesaje]] y K3
+precisan el recorrido vigente del piloto: el control ordinario es
+`AVANCE_KG`, no solicita conteo, no corta turno/tramo y usa el mismo botón/F2
+que el final, con un checkbox temporal `Manga incompleta` que se limpia tras
+cada confirmación.
 
 El primer recorrido vertical cubre mangas simples de Fabricación. Las mangas
 de WIP o producto obtenidas mediante Armado podrán reutilizar la semántica de
@@ -68,8 +97,8 @@ o el cambio de color sin pedir al maquinista que reconstruya documentos.
 3. Cada control conserva bruto, tara y neto acumulado, pero no confirma
    unidades, no imprime postetiqueta y no habilita recepción ni Kardex.
 4. La interfaz nunca suma controles acumulados como si fueran bolsas distintas.
-5. El maquinista distingue con acciones explícitas `Registrar avance; sigue
-   abierta` y `Completar manga; cerrar e imprimir`.
+5. El maquinista distingue avance y final mediante el estado explícito del
+   checkbox `Manga incompleta`; ambos usan un único botón `Pesar manga (F2)`.
 6. El cierre completo confirma la cantidad asignada sin pedirla nuevamente.
 7. Un cierre definitivo por debajo de la asignación es una excepción distinta,
    exige conteo real, motivo y autoridad de supervisión.
@@ -204,12 +233,12 @@ moldes multipieza y no mezcla otras corridas, recetas o lotes.
 3. La estación muestra como solo lectura manga, máquina, corrida/color,
    artículo, cantidad objetivo, responsable actual, último control y meta.
 4. La balanza obtiene una lectura estable.
-5. El maquinista elige una de dos acciones grandes y excluyentes:
-   - `Registrar avance — seguirá llenándose`;
-   - `Completar manga — pesaje final e imprimir`.
+5. El maquinista usa una sola acción `Pesar manga (F2)` y define antes la
+   intención: checkbox `Manga incompleta` marcado registra avance; apagado
+   ejecuta el final.
 6. Al registrar avance, central guarda un `PESAJE_CONTROL`, devuelve
-   `AVANCE GUARDADO · USE EL MISMO QR`, limpia la pantalla y no imprime
-   postetiqueta.
+   `AVANCE GUARDADO · USE EL MISMO QR`, conserva el contexto, devuelve el foco
+   al lector e imprime un sticker CONTROL sin QR, conteo ni peso estándar.
 7. La manga vuelve a su máquina y puede repetir el flujo en el mismo turno o en
    jornadas posteriores.
 8. Al completar, la interfaz confirma visiblemente la cantidad asignada que se
@@ -218,9 +247,11 @@ moldes multipieza y no mezcla otras corridas, recetas o lotes.
    postetiqueta.
 10. La manga queda `PENDIENTE_RECEPCION_ALMACEN`; todavía no existe en Kardex.
 
-La asignación concreta de teclas rápidas se decide en la Tech Spec y se prueba
-con la estación física. No se fija un checkbox persistente como único control
-porque olvidar su estado puede cerrar una manga por error.
+K3 fija F2 y el botón único para reducir la decisión motora. El checkbox no es
+persistente: se apaga después de cada avance, la línea de modo anuncia la
+consecuencia y el botón se bloquea hasta que el peso acumulado supere el último
+control. La UAT física debe confirmar que estas guardas evitan un cierre por
+olvido.
 
 ## 7. Información de avance y ayuda para el color
 
@@ -477,16 +508,16 @@ un rol enviado por el frontend.
 
 1. ¿Los controles intermedios son solamente evidencia/visibilidad, como se
    propone, o la empresa necesita que acrediten algún indicador oficial?
-2. Cuando una manga cruza varias OT, ¿se requieren unidades exactas por OT y
-   trabajador? Si la respuesta es sí, ¿quién registra el conteo al relevo sin
-   trasladar digitación al maquinista?
+2. **Resuelto para el piloto vigente:** el conteo durante Fabricación no es
+   confiable y el control no lo solicita. La atribución exacta de unidades por
+   OT/trabajador queda fuera de alcance hasta definir otra fuente válida.
 3. ¿La meta principal que espera Planta es corrida/OF, OT/máquina o ambas? La
    recomendación es mostrar ambas, usando la corrida como autoridad para el
    cambio de color.
 4. ¿Qué perfiles o productos pueden permanecer abiertos varios días y cuál es
    su plazo esperado antes de alertar?
-5. ¿El control intermedio requiere algún comprobante físico? La recomendación
-   es conservar la preetiqueta y no imprimir otro sticker.
+5. **Resuelto en K2/K3:** el control imprime un sticker de peso sin QR; la
+   preetiqueta conserva la identidad única y debe permanecer legible.
 6. ¿Quién puede cerrar definitivamente por debajo de la cantidad asignada? La
    propuesta asigna esa excepción a supervisión.
 7. ¿Se exige nombre del responsable vigente impreso en la preetiqueta? Si es
@@ -498,9 +529,9 @@ un rol enviado por el frontend.
 9. Validar como línea base que una manga conserve una OT de origen para código,
    cupo e identidad, y que el encargado pueda reasignar trabajador únicamente
    mediante eventos auditados, nunca sobrescribiendo historia.
-10. Decidir si los perfiles multi-jornada usarán cierre final parcial diario o
-    tramos de continuidad hacia otras OT compatibles. Una reasignación manual
-    de trabajador no resuelve esta frontera.
+10. K1 ya decide que una manga normal compatible usa tramos de continuidad; el
+    cierre final parcial sigue siendo definitivo. Falta decidir qué otros
+    perfiles podrán usar continuidad en incrementos posteriores.
 11. Definir la custodia física de stickers: generados, impresos no entregados,
     entregados no iniciados y pegados en manga abierta requieren acciones
     diferentes. Si el nombre del trabajador permanece impreso, el relevo exige
@@ -508,19 +539,16 @@ un rol enviado por el frontend.
 
 ## 15. Impacto sobre decisiones y especificaciones vigentes
 
-Al aprobar la historia se debe:
+Para la porción K1 se completó:
 
-1. registrar una decisión que reemplace parcialmente
+1. la decisión que reemplaza parcialmente
    [[2026-08-01_Corte_Horario_sin_Pesaje_de_Manga_Abierta]];
-2. crear `TS-010K_Pesaje_Intermedio_y_Cierre_Final_de_Mangas`;
-3. actualizar US-010C/D/P para permitir controles y transferencias compatibles
-   sin debilitar los cierres de OT;
-4. actualizar TS-010C/D, dominio de peso/manga, contrato de estación y
-   endpoints;
-5. actualizar la vista de Balanza, el avance por color, la guía operativa y la
-   UAT C/D;
-6. dividir Approved for Dev en, como mínimo, controles/cierre/meta y
-   continuidad multi-OT/relevos si el riesgo técnico lo exige.
+2. `US-010K1`, `TS-010K1` y `DEV-010K1` como incremento acotado;
+3. contratos Central/estación, persistencia y capacidades para el control;
+4. vista de Balanza, vínculo desde OT destino, guía operativa y UAT remota.
+
+La meta por color, reapertura y otros perfiles permanecen en esta historia
+madre para incrementos posteriores.
 
 ## 16. Definición de preparada
 
@@ -531,11 +559,11 @@ Al aprobar la historia se debe:
 - [x] Dataset de tres días y escenarios principales reproducibles.
 - [x] Correcciones, reintentos, concurrencia y reversa de recepción cubiertos.
 - [ ] Planta valida las decisiones del apartado 14.
-- [ ] Se acuerda la fuente de atribución por OT para una manga multi-jornada.
-- [ ] Se registra una línea base automatizada que demuestre el comportamiento
+- [x] Se acuerda la fuente de atribución por OT para una manga multi-jornada.
+- [x] Se registra una línea base automatizada que demuestre el comportamiento
       actual de un único pesaje final.
 - [ ] Se prueba con Balanza e impresora que las dos acciones son inequívocas.
-- [ ] Se aprueba formalmente la sustitución parcial de la decisión de 2026-08-01.
+- [x] Se aprueba formalmente la sustitución parcial de la decisión de 2026-08-01.
 
-Hasta cerrar las casillas pendientes, esta historia no pasa a Tech Spec ni se
-declara lista para desarrollo.
+K1 ya pasó por Tech Spec y desarrollo local. Las casillas pendientes gobiernan
+la ampliación de la historia madre y la certificación con hardware real.

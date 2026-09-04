@@ -399,3 +399,13 @@ US-010K conserva las decisiones todavía abiertas sobre manga multi-jornada,
 pesajes de control y tramos entre OT. US-010L conserva material de segunda,
 R1…Rn y preparación experimental; ninguna de esas capacidades se incorpora de
 forma implícita en US-010M.
+
+## 12. Actualización declarada por el responsable — 2026-09-02
+
+El responsable confirma ausencia de conteo humano confiable: el flujo objetivo
+de Pesaje registra kg. La pregunta histórica sobre captura supervisada de conteo
+no equivale a autorización vigente para exigirlo. K3 implementó control ordinario
+sin conteo; K4 mejora bloqueo/recuperación y su nombre de checkbox. El cierre
+normal todavía copia unidades del plan y los relevos K1/K2 requieren unidades;
+esa brecha NO está resuelta. Ver [[Feedback_Pesaje_y_Cierre_Kg_sin_Conteo]] y
+[[UAT_US-010K4_Estado_y_Bloqueos_Visibles_al_Pesar]]. No registrar UAT física aprobada.

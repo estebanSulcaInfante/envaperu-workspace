@@ -494,15 +494,22 @@ En la estación:
 
 - hoja: 109 × 50 mm;
 - dos columnas correctamente alineadas;
-- una manga por columna;
+- una misma manga duplicada en ambas columnas: una copia para la bolsa y otra
+  para doble validación;
+- si el trabajo contiene dos mangas, salen dos hojas consecutivas y cada hoja
+  conserva sus dos copias gemelas;
 - QR a `X + 120`, corrección `L`, módulo `4`;
-- preview QR de referencia: 120 × 120 dots;
+- QR completo dentro de los 400 dots de alto, sin recorte inferior;
+- preview con el tamaño real calculado para el payload QR, no una miniatura fija;
 - texto no cortado;
+- nombres con acentos legibles mediante `CODEPAGE UTF-8`; por ejemplo,
+  `Cristóbal Lázaro` debe conservar la `ó` y la `á`;
 - `OF/OT`, Maquinista, PiezaColor, Color y Tipo correctos;
 - `NORMAL` o `EXTRA` visible;
 - QR legible con el lector.
 
-Si se imprimió una sola manga, la segunda columna debe quedar libre.
+Si se imprimió una sola manga, ambas columnas deben mostrar la misma identidad
+y ambos QR deben resolver el mismo `label_id`.
 
 ## 14. Ejecutar el pesaje
 
@@ -715,6 +722,7 @@ La UAT queda aprobada cuando:
 - la anulación posterior a Almacén exige una reversa segregada;
 - la eliminación directa está bloqueada para todos los perfiles;
 - ambos QR se leen en el primer intento;
+- las dos copias físicas de cada identidad resuelven el mismo `label_id`;
 - ninguna columna queda recortada;
 - no existe doble pesaje;
 - central caída bloquea F2;
